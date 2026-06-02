@@ -307,15 +307,21 @@ async function fetchAllIssues() {
   const maxResults = 100;
 
   do {
-    const url = `${JIRA_BASE}/rest/api/3/search?` + new URLSearchParams({
-      jql: JQL,
-      fields: FIELDS,
-      maxResults,
-      startAt
-    });
+    const url = `${JIRA_BASE}/rest/api/3/search/jql`;
 
     const res = await fetch(url, {
-      headers: { 'x-jira-auth': authHeader, 'Accept': 'application/json' }
+      method: 'POST',
+      headers: {
+        'x-jira-auth': authHeader,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        jql: JQL,
+        fields: FIELDS.split(','),
+        maxResults,
+        startAt
+      })
     });
 
     if (!res.ok) {

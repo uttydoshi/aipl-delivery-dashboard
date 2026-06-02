@@ -18,8 +18,8 @@ const server = http.createServer((req, res) => {
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Authorization, Accept, x-jira-auth',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Authorization, Accept, Content-Type, x-jira-auth',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     });
     res.end();
     return;
@@ -49,10 +49,11 @@ const server = http.createServer((req, res) => {
     const options = {
       hostname: JIRA_HOST,
       path: jiraPath,
-      method: 'GET',
+      method: req.method,
       headers: {
         'Authorization': authHeader,
         'Accept': 'application/json',
+        'Content-Type': 'application/json',
       }
     };
 
@@ -69,7 +70,8 @@ const server = http.createServer((req, res) => {
       res.end(JSON.stringify({ error: e.message }));
     });
 
-    proxyReq.end();
+    // Forward request body for POST requests
+    req.pipe(proxyReq);
     return;
   }
 
