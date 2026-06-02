@@ -46,32 +46,44 @@ const server = http.createServer((req, res) => {
       return;
     }
 
-    const options = {
-      hostname: JIRA_HOST,
-      path: jiraPath,
-      method: req.method,
-      headers: {
-        'Authorization': authHeader,
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      }
-    };
+    // Collect full request body first, then forward
+    let body = [];
+    req.on('data', chunk => body.push(chunk));
+    req.on('end', () => {
+      const bodyBuffer = Buffer.concat(body);
 
-    const proxyReq = https.request(options, (proxyRes) => {
-      res.writeHead(proxyRes.statusCode, {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+      const options = {
+        hostname: JIRA_HOST,
+        path: jiraPath,
+        method: req.method,
+        headers: {
+          'Authorization': authHeader,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Content-Length': bodyBuffer.length,
+        }
+      };
+
+      console.log(`→ ${req.method} https://${JIRA_HOST}${jiraPath}`);
+
+      const proxyReq = https.request(options, (proxyRes) => {
+        console.log(`← ${proxyRes.statusCode}`);
+        res.writeHead(proxyRes.statusCode, {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        });
+        proxyRes.pipe(res);
       });
-      proxyRes.pipe(res);
-    });
 
-    proxyReq.on('error', (e) => {
-      res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-      res.end(JSON.stringify({ error: e.message }));
-    });
+      proxyReq.on('error', (e) => {
+        console.error('Proxy error:', e.message);
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ error: e.message }));
+      });
 
-    // Forward request body for POST requests
-    req.pipe(proxyReq);
+      proxyReq.write(bodyBuffer);
+      proxyReq.end();
+    });
     return;
   }
 
