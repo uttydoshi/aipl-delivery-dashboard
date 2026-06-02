@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIPL Delivery Stats</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/gridjs@5.0.2/dist/gridjs.umd.js" integrity="sha384-/XXDzxe4FsGiAe50i/u9pY/Vy/uX654MHB1xoc1BJNnH1WXHhqHga9g3q5tF4gj7" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridjs@5.0.2/dist/theme/mermaid.min.css" integrity="sha384-K3RzVFnmHBqPN4NdFRDNi6RSnLpg83l/J3x0MXvTlDNEZj/bq0NvgDp/GN7KDVG" crossorigin="anonymous">
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f8f9fb;
+    color: #1a1a2e;
+    padding: 24px;
+  }
+  h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 20px;
+  }
+  .summary-bar {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .stat-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 14px 20px;
+    min-width: 140px;
+  }
+  .stat-card .label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-card .value { font-size: 26px; font-weight: 700; color: #1a1a2e; margin-top: 4px; }
+  .stat-card .unit { font-size: 12px; color: #9ca3af; }
+  .controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .controls input {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 7px 12px;
+    font-size: 13px;
+    width: 220px;
+    background: #fff;
+  }
+  .controls select {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 7px 10px;
+    font-size: 13px;
+    background: #fff;
+  }
+  .status-pill {
+    display: inline-block;
+    background: #d1fae5;
+    color: #065f46;
+    border-radius: 12px;
+    padding: 2px 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .label-tag {
+    display: inline-block;
+    background: #ede9fe;
+    color: #5b21b6;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 11px;
+    margin: 1px;
+  }
+  .ticket-link {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 12px;
+  }
+  .ticket-link:hover { text-decoration: underline; }
+  .loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 40px;
+    color: #6b7280;
+    font-size: 14px;
+  }
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid #e5e7eb;
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error { color: #dc2626; padding: 20px; font-size: 13px; background: #fef2f2; border-radius: 8px; white-space: pre-wrap; word-break: break-all; }
+  #grid-container .gridjs-container { border-radius: 10px; overflow: hidden; border: 1px solid #e5e7eb; }
+  #grid-container .gridjs-head { background: #f3f4f6; }
+  #grid-container .gridjs-th { font-size: 12px; font-weight: 600; color: #374151; padding: 10px 12px; }
+  #grid-container .gridjs-td { font-size: 12px; padding: 10px 12px; vertical-align: top; }
+  #grid-container .gridjs-tr:hover td { background: #f9fafb; }
+  .num-cell { text-align: center; font-weight: 600; }
+  .blocked-badge {
+    display: inline-block;
+    background: #fee2e2;
+    color: #991b1b;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .no-blocked { color: #9ca3af; font-size: 11px; }
+  .date-range-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .date-range-bar label { font-size: 12px; font-weight: 600; color: #374151; }
+  .date-range-bar input[type="date"] {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 13px;
+    background: #fff;
+    color: #1a1a2e;
+  }
+  .date-range-bar button {
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background: #fff;
+    cursor: pointer;
+    color: #374151;
+  }
+  .date-range-bar button:hover { background: #f3f4f6; }
+  .chart-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+  .chart-card h2 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 14px;
+  }
+</style>
+</head>
+<body>
+
+<h1>AIPL Delivery Stats</h1>
+<p class="subtitle">Done tickets · AI Platform · fetched live from Jira</p>
+
+<div id="date-range-bar" class="date-range-bar" style="display:none">
+  <label>From</label>
+  <input type="date" id="filter-start">
+  <label>To</label>
+  <input type="date" id="filter-end">
+  <button id="reset-dates">Reset</button>
+</div>
+
+<div id="summary" class="summary-bar"></div>
+
+<div id="loading" class="loading"><div class="spinner"></div> Loading tickets…</div>
+<div id="error" class="error" style="display:none"></div>
+<div id="chart-card" style="display:none;flex-direction:column;gap:16px;margin-bottom:24px;">
+
+  <!-- Time series: full width -->
+  <div class="chart-card" style="margin-bottom:0;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+      <div>
+        <h2 style="margin-bottom:4px;">Average Cycle Time by Week</h2>
+        <p id="date-range" style="font-size:12px;color:#6b7280;"></p>
+      </div>
+      <div id="trend-indicator" style="text-align:right;"></div>
+    </div>
+    <canvas id="cycle-chart" height="75"></canvas>
+  </div>
+
+  <!-- Stacked bar charts side by side -->
+  <div style="display:flex;gap:16px;">
+    <div class="chart-card" style="flex:1;margin-bottom:0;">
+      <h2 style="margin-bottom:10px;">By Issue Type</h2>
+      <div style="position:relative;padding-top:28px;">
+        <canvas id="type-chart" height="60"></canvas>
+      </div>
+    </div>
+    <div class="chart-card" style="flex:1;margin-bottom:0;">
+      <h2 style="margin-bottom:10px;">By Work Category</h2>
+      <div style="position:relative;padding-top:28px;">
+        <canvas id="category-chart" height="60"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table full width below -->
+  <div>
+    <div id="controls" class="controls" style="display:none;margin-bottom:8px;">
+      <input id="search-input" type="text" placeholder="Search by key, title, assignee…">
+      <select id="label-filter"><option value="">All labels</option></select>
+      <select id="type-filter"><option value="">All issue types</option></select>
+    </div>
+    <div id="grid-container"></div>
+  </div>
+
+</div>
+
+
+<script>
+const CLOUD_ID = '5b094b66-6935-4e1b-86b0-d4722bcafaf4';
+const JQL = 'project = AIPL and status = Done and issuetype not in (Epic,Milestone, Initiative) and "End date & time" IS NOT EMPTY and "End date & time" >= -90d ORDER BY "End date & time" DESC';
+
+let allIssues = [];
+let grid = null;
+let searchTerm = '';
+let labelFilter = '';
+let typeFilter = '';
+let dateStart = null;
+let dateEnd = null;
+
+function fmt(dtStr) {
+  if (!dtStr) return '—';
+  const d = new Date(dtStr);
+  return d.toLocaleDateString('en-AU', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+
+function setLoading(msg) {
+  const el = document.getElementById('loading');
+  if (el) el.innerHTML = `<div class="spinner"></div> ${msg}`;
+}
+
+function parseMcpResponse(raw) {
+  // callMcpTool wraps response in { content: [{ type: 'text', text: '..json..' }] }
+  let data;
+  if (raw?.content?.[0]?.text) data = JSON.parse(raw.content[0].text);
+  else if (typeof raw === 'string') data = JSON.parse(raw);
+  else data = raw;
+  if (data?.errorMessages?.length || data?.errors) {
+    throw new Error(`Jira API error: ${JSON.stringify(data.errorMessages || data.errors)}`);
+  }
+  return data;
+}
+
+async function fetchAllIssues() {
+  const issues = [];
+  let nextPageToken = undefined;
+  let page = 0;
+
+  do {
+    page++;
+    const params = {
+      cloudId: CLOUD_ID,
+      jql: JQL,
+      maxResults: 100,
+      fields: ['summary','labels','assignee','issuetype','customfield_12949','customfield_12950','customfield_13273','customfield_13275','customfield_14034']
+    };
+    if (nextPageToken) params.nextPageToken = nextPageToken;
+
+    let raw;
+    try {
+      raw = await window.cowork.callMcpTool(
+        'mcp__2d8047e0-4fbe-4467-ae8d-1365bd8f9bea__searchJiraIssuesUsingJql', params
+      );
+    } catch(e) {
+      throw new Error(`callMcpTool failed on page ${page}: ${e.message}`);
+    }
+
+    const data = parseMcpResponse(raw);
+
+    // Response may come in two shapes:
+    // A) { issues: { nodes: [...], pageInfo: { hasNextPage, endCursor } } }  (Claude-side shape)
+    // B) { startAt, maxResults, total, issues: [...] }  (raw Jira REST shape via callMcpTool)
+    let nodes, hasNextPage, endCursor;
+
+    if (Array.isArray(data?.issues)) {
+      // Shape B — Jira REST native
+      nodes = data.issues;
+      const startAt = data.startAt ?? 0;
+      const maxResults = data.maxResults ?? nodes.length;
+      const total = data.total ?? nodes.length;
+      hasNextPage = (startAt + maxResults) < total;
+      // nextPageToken for cursor-based; fall back to startAt offset encoded as string
+      endCursor = data.pageInfo?.endCursor ?? String(startAt + nodes.length);
+    } else {
+      // Shape A — wrapped nodes
+      nodes = data?.issues?.nodes || [];
+      hasNextPage = data?.issues?.pageInfo?.hasNextPage ?? false;
+      endCursor = data?.issues?.pageInfo?.endCursor;
+    }
+
+    if (page === 1 && nodes.length === 0) {
+      throw new Error(`No issues returned on page 1.\nRaw: ${JSON.stringify(data, null, 2).slice(0, 1500)}`);
+    }
+
+    issues.push(...nodes);
+    setLoading(`Loaded ${issues.length} tickets…`);
+
+    nextPageToken = hasNextPage ? endCursor : undefined;
+  } while (nextPageToken);
+
+  return issues;
+}
+
+
+function populateFilters(issues) {
+  const labels = new Set();
+  const types = new Set();
+  for (const iss of issues) {
+    (iss.fields?.labels || []).forEach(l => labels.add(l));
+    if (iss.fields?.issuetype?.name) types.add(iss.fields.issuetype.name);
+  }
+  const labelSel = document.getElementById('label-filter');
+  [...labels].sort().forEach(l => {
+    const opt = document.createElement('option'); opt.value = l; opt.textContent = l;
+    labelSel.appendChild(opt);
+  });
+  const typeSel = document.getElementById('type-filter');
+  [...types].sort().forEach(t => {
+    const opt = document.createElement('option'); opt.value = t; opt.textContent = t;
+    typeSel.appendChild(opt);
+  });
+}
+
+function filterIssues() {
+  return allIssues.filter(iss => {
+    const f = iss.fields;
+    const labels = f?.labels || [];
+    const issueType = f?.issuetype?.name || '';
+    const text = `${iss.key} ${f?.summary || ''}`.toLowerCase();
+    if (searchTerm && !text.includes(searchTerm.toLowerCase())) return false;
+    if (labelFilter && !labels.includes(labelFilter)) return false;
+    if (typeFilter && issueType !== typeFilter) return false;
+    if (dateStart && f?.customfield_12950) {
+      if (new Date(f.customfield_12950) < dateStart) return false;
+    }
+    if (dateEnd && f?.customfield_12950) {
+      const end = new Date(dateEnd);
+      end.setHours(23, 59, 59, 999);
+      if (new Date(f.customfield_12950) > end) return false;
+    }
+    return true;
+  });
+}
+
+function buildRows(issues) {
+  return issues.map(iss => {
+    const f = iss.fields;
+    const labelsHtml = (f?.labels || []).map(l => `<span class="label-tag">${l}</span>`).join('') || '<span style="color:#9ca3af;font-size:11px">—</span>';
+    const cycleTime = f?.customfield_13273 != null ? f.customfield_13273 + 'd' : '—';
+    const leadTime = f?.customfield_13275 != null ? f.customfield_13275 + 'd' : '—';
+    const blockedDays = f?.customfield_14034;
+    const blocked = blockedDays > 0
+      ? gridjs.html(`<span class="blocked-badge">${blockedDays}d</span>`)
+      : '—';
+    return [
+      gridjs.html(`<a class="ticket-link" href="https://cultureamp.atlassian.net/browse/${iss.key}" target="_blank">${iss.key}</a>`),
+      f?.summary || '',
+      blocked,
+      cycleTime,
+      leadTime,
+      gridjs.html(labelsHtml)
+    ];
+  });
+}
+
+let cycleChart = null;
+let typeChart = null;
+let categoryChart = null;
+
+function issueCategory(typeName) {
+  const t = (typeName || '').toLowerCase();
+  if (['story','discovery','task','sub-task'].includes(t)) return 'Features Development';
+  if (['bug','ad hoc request','support','incident'].includes(t)) return 'Unplanned Work (Bugs & Support)';
+  if (['repo maintenance','tech debt'].includes(t)) return 'Planned Maintenance';
+  return 'BAU';
+}
+
+function weekLabel(dateStr) {
+  // Returns "DD Mon YY" of the Monday of that week
+  const d = new Date(dateStr);
+  const day = d.getDay() || 7;
+  d.setDate(d.getDate() - (day - 1));
+  return d.toLocaleDateString('en-AU', { day: '2-digit', month: 'short', year: '2-digit' });
+}
+
+function renderChart(issues) {
+  const chartCard = document.getElementById('chart-card');
+  chartCard.style.display = 'flex';
+
+  const endDates = issues
+    .map(i => i.fields?.customfield_12950)
+    .filter(Boolean)
+    .map(d => new Date(d))
+    .sort((a, b) => a - b);
+  const _dateRangeEndDates = endDates; // used after slope is computed below
+
+  const median = arr => {
+    const s = [...arr].sort((a, b) => a - b);
+    const m = Math.floor(s.length / 2);
+    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+  };
+
+  // Group tickets by week (keyed by Monday label, sorted chronologically)
+  const byWeek = {};
+  const weekOrder = [];
+  const sorted = issues
+    .filter(i => i.fields?.customfield_12950 && i.fields?.customfield_13273 != null)
+    .sort((a, b) => new Date(a.fields.customfield_12950) - new Date(b.fields.customfield_12950));
+
+  for (const iss of sorted) {
+    const wk = weekLabel(iss.fields.customfield_12950);
+    if (!byWeek[wk]) { byWeek[wk] = []; weekOrder.push(wk); }
+    byWeek[wk].push({ key: iss.key, y: iss.fields.customfield_13273 });
+  }
+
+  const avg = arr => Math.round((arr.reduce((a, b) => a + b, 0) / arr.length) * 10) / 10;
+  const sd = arr => {
+    if (arr.length < 2) return null;
+    const m = arr.reduce((a, b) => a + b, 0) / arr.length;
+    return Math.round(Math.sqrt(arr.reduce((s, v) => s + (v - m) ** 2, 0) / arr.length) * 10) / 10;
+  };
+
+  const avgPoints = weekOrder.map((wk, idx) => {
+    const vals = byWeek[wk].map(p => p.y);
+    return { x: idx, y: avg(vals), count: vals.length, sd: sd(vals) };
+  });
+
+
+  const ctx = document.getElementById('cycle-chart').getContext('2d');
+  if (cycleChart) cycleChart.destroy();
+
+  const targetLine = weekOrder.map((_, idx) => ({ x: idx, y: 6 }));
+
+  // Linear regression over avg cycle times
+  const n = avgPoints.length;
+  const sumX = avgPoints.reduce((s, p) => s + p.x, 0);
+  const sumY = avgPoints.reduce((s, p) => s + p.y, 0);
+  const sumXY = avgPoints.reduce((s, p) => s + p.x * p.y, 0);
+  const sumX2 = avgPoints.reduce((s, p) => s + p.x * p.x, 0);
+  const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+
+  // Render date range and trend indicator now that slope is known
+  if (_dateRangeEndDates.length) {
+    const fmtDate = d => d.toLocaleDateString('en-AU', { day: '2-digit', month: 'short', year: 'numeric' });
+    document.getElementById('date-range').textContent =
+      `${fmtDate(_dateRangeEndDates[0])} – ${fmtDate(_dateRangeEndDates[_dateRangeEndDates.length - 1])}`;
+
+    const arrow = slope > 0.05 ? '↑' : slope < -0.05 ? '↓' : '→';
+    const color = slope > 0.05 ? '#dc2626' : slope < -0.05 ? '#15803d' : '#6b7280';
+    const text = slope > 0.05 ? 'Cycle time trending up' : slope < -0.05 ? 'Cycle time trending down' : 'Cycle time stable';
+    document.getElementById('trend-indicator').innerHTML =
+      `<span style="font-size:22px;font-weight:700;color:${color}">${arrow}</span>
+       <div style="font-size:11px;font-weight:600;color:${color};text-transform:uppercase;letter-spacing:0.05em;margin-top:2px;">${text}</div>`;
+  }
+  const intercept = (sumY - slope * sumX) / n;
+  const trendLine = [
+    { x: avgPoints[0].x, y: Math.round((slope * avgPoints[0].x + intercept) * 10) / 10 },
+    { x: avgPoints[avgPoints.length - 1].x, y: Math.round((slope * avgPoints[avgPoints.length - 1].x + intercept) * 10) / 10 }
+  ];
+
+  cycleChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: [
+      {
+        label: 'Target (6d)',
+        data: targetLine,
+        borderColor: '#15803d',
+        borderWidth: 1.5,
+        borderDash: [6, 4],
+        pointRadius: 0,
+        fill: false,
+        tension: 0,
+        order: 0,
+      },
+      {
+        label: 'Avg Cycle Time',
+        data: avgPoints,
+        borderColor: '#6366f1',
+        backgroundColor: 'rgba(99,102,241,0.1)',
+        borderWidth: 2.5,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointBackgroundColor: '#6366f1',
+        fill: true,
+        tension: 0.3,
+        yAxisID: 'y',
+      }]
+    },
+
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: true, position: 'top', labels: { font: { size: 12 }, boxWidth: 12 } },
+        tooltip: {
+          callbacks: {
+            title: items => `Week of ${weekOrder[items[0].parsed.x] || ''}`,
+            label: item => {
+              if (item.dataset.label === 'Target (6d)') return `Target: 6d`;
+
+              const { y, count } = item.raw;
+              return `Avg: ${y}d (${count} card${count !== 1 ? 's' : ''})`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          type: 'linear',
+          ticks: { stepSize: 1, font: { size: 11 }, callback: val => weekOrder[val] ?? '' },
+          title: { display: true, text: 'Week (End Date)', font: { size: 12 } },
+          grid: { color: '#f3f4f6' },
+          min: 0,
+          max: weekOrder.length - 1,
+        },
+        y: {
+          title: { display: true, text: 'Avg Cycle Time (days)', font: { size: 12 } },
+          beginAtZero: true,
+          grid: { color: '#f3f4f6' },
+          ticks: { font: { size: 11 } },
+          position: 'left',
+        },
+      }
+    }
+  });
+
+  // Pie chart — cards by issue type
+  const typeCounts = {};
+  for (const iss of issues) {
+    const t = iss.fields?.issuetype?.name || 'Unknown';
+    typeCounts[t] = (typeCounts[t] || 0) + 1;
+  }
+  const typeLabels = Object.keys(typeCounts);
+  const typeData = typeLabels.map(t => typeCounts[t]);
+  const palette = ['#6366f1','#f59e0b','#10b981','#ef4444','#3b82f6','#8b5cf6','#ec4899','#14b8a6'];
+
+  const sliceLabelPlugin = {
+    id: 'sliceLabels',
+    afterDraw(chart) {
+      const { ctx, data } = chart;
+      const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+      chart.getDatasetMeta(0).data.forEach((arc, i) => {
+        const pct = Math.round(data.datasets[0].data[i] / total * 100);
+        if (pct < 5) return; // skip tiny slices
+        const angle = (arc.startAngle + arc.endAngle) / 2;
+        const r = (arc.innerRadius + arc.outerRadius) / 2;
+        const x = arc.x + Math.cos(angle) * r;
+        const y = arc.y + Math.sin(angle) * r;
+        ctx.save();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${pct}%`, x, y);
+        ctx.restore();
+      });
+    }
+  };
+
+  // Category pie
+  const catOrder = ['Features Development','Unplanned Work (Bugs & Support)','Planned Maintenance','BAU'];
+  const catCounts = {};
+  for (const iss of issues) {
+    const cat = issueCategory(iss.fields?.issuetype?.name);
+    catCounts[cat] = (catCounts[cat] || 0) + 1;
+  }
+  const catLabels = catOrder.filter(c => catCounts[c]);
+  const catData = catLabels.map(c => catCounts[c]);
+  const catColors = { 'Features Development': '#6366f1', 'Unplanned Work (Bugs & Support)': '#ef4444', 'Planned Maintenance': '#f59e0b', 'BAU': '#10b981' };
+
+  // External tooltip rendered above the hovered segment
+  const externalTooltip = (context) => {
+    const { chart, tooltip } = context;
+    const wrapper = chart.canvas.parentNode;
+    let el = wrapper.querySelector('.bar-tooltip');
+    if (!el) {
+      el = document.createElement('div');
+      el.className = 'bar-tooltip';
+      el.style.cssText = 'position:absolute;background:#1a1a2e;color:#fff;border-radius:6px;padding:5px 10px;font-size:12px;pointer-events:none;white-space:nowrap;z-index:10;transition:opacity 0.1s;transform:translateX(-50%);';
+      wrapper.appendChild(el);
+    }
+    if (tooltip.opacity === 0) { el.style.opacity = '0'; return; }
+    if (tooltip.body) {
+      const lines = tooltip.body.flatMap(b => b.lines);
+      el.innerHTML = lines.join('<br>');
+    }
+    // Position above the hovered segment using caretX
+    const canvasRect = chart.canvas.getBoundingClientRect();
+    const wrapperRect = wrapper.getBoundingClientRect();
+    const x = tooltip.caretX;
+    const offsetTop = chart.canvas.offsetTop - el.offsetHeight - 6;
+    el.style.left = `${x}px`;
+    el.style.top = `${Math.max(0, offsetTop)}px`;
+    el.style.opacity = '1';
+  };
+
+  const stackedBarOptions = (labels, data, colors) => ({
+    type: 'bar',
+    data: {
+      labels: [''],
+      datasets: labels.map((lbl, i) => {
+        const total = data.reduce((a, b) => a + b, 0);
+        const pct = Math.round(data[i] / total * 100);
+        return {
+          label: lbl,
+          data: [pct],
+          backgroundColor: colors[i],
+          borderWidth: 0,
+          barThickness: 36,
+        };
+      })
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12, padding: 8 } },
+        tooltip: {
+          enabled: false,
+          external: externalTooltip,
+          callbacks: {
+            label: item => {
+              const total = data.reduce((a, b) => a + b, 0);
+              return `${item.dataset.label}: ${data[item.datasetIndex]} cards (${item.raw}%)`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { stacked: true, display: false, max: 100 },
+        y: { stacked: true, display: false }
+      },
+      layout: { padding: { top: 4, bottom: 4 } }
+    }
+  });
+
+  const catCtx = document.getElementById('category-chart').getContext('2d');
+  if (categoryChart) categoryChart.destroy();
+  categoryChart = new Chart(catCtx, stackedBarOptions(catLabels, catData, catLabels.map(c => catColors[c])));
+
+  const pieCtx = document.getElementById('type-chart').getContext('2d');
+  if (typeChart) typeChart.destroy();
+  typeChart = new Chart(pieCtx, stackedBarOptions(typeLabels, typeData, palette.slice(0, typeLabels.length)));
+}
+
+function renderGrid(issues) {
+  const rows = buildRows(issues);
+  if (grid) {
+    grid.updateConfig({ data: rows }).forceRender();
+  } else {
+    grid = new gridjs.Grid({
+      columns: [
+        { name: 'Key', width: '120px' },
+        { name: 'Summary', width: '380px' },
+        { name: 'Blocked', width: '80px', sort: false },
+        { name: 'Cycle (days)', width: '95px' },
+        { name: 'Lead (days)', width: '90px' },
+        { name: 'Labels', width: '180px', sort: false }
+      ],
+      data: rows,
+      sort: true,
+      pagination: { limit: 5 },
+      style: { table: { 'white-space': 'normal' } }
+    });
+    grid.render(document.getElementById('grid-container'));
+  }
+}
+
+function renderSummary(issues) {
+  const cycleTimes = issues.map(i => i.fields?.customfield_13273).filter(v => v != null);
+  const leadTimes = issues.map(i => i.fields?.customfield_13275).filter(v => v != null);
+  const avg = arr => arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length) : null;
+  const stdDev = arr => {
+    if (arr.length < 2) return null;
+    const mean = avg(arr);
+    const variance = arr.reduce((s, v) => s + (v - mean) ** 2, 0) / arr.length;
+    return Math.sqrt(variance);
+  };
+
+  // Per-week std devs (only weeks with ≥2 cards)
+  const byWeek = {};
+  for (const iss of issues) {
+    const ct = iss.fields?.customfield_13273;
+    const end = iss.fields?.customfield_12950;
+    if (ct == null || !end) continue;
+    const wk = weekLabel(end);
+    if (!byWeek[wk]) byWeek[wk] = [];
+    byWeek[wk].push(ct);
+  }
+  const weekStdDevs = Object.values(byWeek).map(stdDev).filter(v => v !== null);
+  const avgWeekStdDev = weekStdDevs.length ? avg(weekStdDevs).toFixed(1) : '—';
+
+  const fmtAvg = arr => avg(arr) !== null ? avg(arr).toFixed(1) : '—';
+
+  // Cycle time colours: ≤6 dark green, 7 light green, 8 yellow, ≥9 red
+  const statColor = val => {
+    if (val === null || val === undefined || isNaN(val)) return 'inherit';
+    if (val <= 6) return '#15803d';
+    if (val <= 7) return '#65a30d';
+    if (val <= 8) return '#ca8a04';
+    return '#dc2626';
+  };
+  // Std dev colours: ≤3 dark green, 4 yellow, 5-6 orange, >7 red
+  const sdColor = val => {
+    if (val === null || val === undefined || isNaN(val)) return 'inherit';
+    if (val <= 3) return '#15803d';
+    if (val <= 4) return '#ca8a04';
+    if (val <= 6) return '#ea580c';
+    return '#dc2626';
+  };
+
+  const unblockedCycleTimes = issues
+    .filter(i => !i.fields?.customfield_14034)
+    .map(i => i.fields?.customfield_13273)
+    .filter(v => v != null);
+
+  document.getElementById('summary').innerHTML = `
+    <div class="stat-card"><div class="label">Done tickets</div><div class="value">${issues.length}</div></div>
+    <div class="stat-card"><div class="label">Avg Cycle Time</div><div class="value" style="color:${statColor(parseFloat(fmtAvg(cycleTimes)))}">${fmtAvg(cycleTimes)}<span class="unit" style="color:inherit"> d</span></div></div>
+    <div class="stat-card"><div class="label">Avg Cycle Time (never blocked)</div><div class="value" style="color:${statColor(parseFloat(fmtAvg(unblockedCycleTimes)))}">${fmtAvg(unblockedCycleTimes)}<span class="unit" style="color:inherit"> d</span></div><div class="unit">${unblockedCycleTimes.length} cards</div></div>
+    <div class="stat-card"><div class="label">Avg Lead Time</div><div class="value">${fmtAvg(leadTimes)}<span class="unit"> d</span></div></div>
+    <div class="stat-card"><div class="label">Avg Weekly Std Dev</div><div class="value" style="color:${sdColor(parseFloat(avgWeekStdDev))}">${avgWeekStdDev}<span class="unit" style="color:inherit"> d</span></div></div>
+  `;
+}
+
+function setupDateRange(issues) {
+  const dates = issues.map(i => i.fields?.customfield_12950).filter(Boolean).sort();
+  if (!dates.length) return;
+  const toISO = d => new Date(d).toISOString().split('T')[0];
+  const startEl = document.getElementById('filter-start');
+  const endEl = document.getElementById('filter-end');
+  startEl.min = endEl.min = toISO(dates[0]);
+  startEl.max = endEl.max = toISO(dates[dates.length - 1]);
+  startEl.value = toISO(dates[0]);
+  endEl.value = toISO(dates[dates.length - 1]);
+  document.getElementById('date-range-bar').style.display = 'flex';
+
+  const applyAndRefresh = () => {
+    dateStart = startEl.value ? new Date(startEl.value) : null;
+    dateEnd = endEl.value ? new Date(endEl.value) : null;
+    const filtered = filterIssues();
+    renderSummary(filtered);
+    renderChart(filtered);
+    renderGrid(filtered);
+  };
+
+  startEl.addEventListener('change', applyAndRefresh);
+  endEl.addEventListener('change', applyAndRefresh);
+  document.getElementById('reset-dates').addEventListener('click', () => {
+    startEl.value = toISO(dates[0]);
+    endEl.value = toISO(dates[dates.length - 1]);
+    applyAndRefresh();
+  });
+}
+
+function setupControls() {
+  document.getElementById('controls').style.display = 'flex';
+  const refresh = () => {
+    const filtered = filterIssues();
+    renderSummary(filtered);
+    renderChart(filtered);
+    renderGrid(filtered);
+  };
+
+  document.getElementById('search-input').addEventListener('input', e => {
+    searchTerm = e.target.value;
+    refresh();
+  });
+  document.getElementById('label-filter').addEventListener('change', e => {
+    labelFilter = e.target.value;
+    refresh();
+  });
+  document.getElementById('type-filter').addEventListener('change', e => {
+    typeFilter = e.target.value;
+    refresh();
+  });
+}
+
+async function main() {
+  try {
+    // Fetch all done issues (blocked days come directly from customfield_14034)
+    const issues = await fetchAllIssues();
+    allIssues = issues;
+    document.getElementById('loading').style.display = 'none';
+    setupDateRange(issues);
+    renderSummary(issues);
+    renderChart(issues);
+    populateFilters(issues);
+    setupControls();
+    renderGrid(issues);
+  } catch (err) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('error').style.display = 'block';
+    document.getElementById('error').textContent = 'Error loading data: ' + err.message;
+  }
+}
+
+// Defer until cowork is ready
+function waitForCowork(cb, attempts = 0) {
+  if (window.cowork && typeof window.cowork.callMcpTool === 'function') {
+    cb();
+  } else if (attempts < 30) {
+    setTimeout(() => waitForCowork(cb, attempts + 1), 200);
+  } else {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('error').style.display = 'block';
+    document.getElementById('error').textContent = 'Error: window.cowork.callMcpTool not available after 6s. This artifact requires Cowork connector access.';
+  }
+}
+
+waitForCowork(main);
+</script>
+</body>
+</html>
