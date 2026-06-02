@@ -303,44 +303,44 @@ function setLoading(msg) {
 
 async function fetchAllIssues() {
   const issues = [];
-  let startAt = 0;
-  const maxResults = 100;
+  let nextPageToken = undefined;
+  let page = 0;
 
   do {
-    const url = `${JIRA_BASE}/rest/api/3/search/jql`;
+    page++;
+    const body = {
+      jql: JQL,
+      fields: FIELDS.split(','),
+      maxResults: 100
+    };
+    if (nextPageToken) body.nextPageToken = nextPageToken;
 
-    const res = await fetch(url, {
+    const res = await fetch(`${JIRA_BASE}/rest/api/3/search/jql`, {
       method: 'POST',
       headers: {
         'x-jira-auth': authHeader,
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        jql: JQL,
-        fields: FIELDS.split(','),
-        maxResults,
-        startAt
-      })
+      body: JSON.stringify(body)
     });
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(`Jira API error ${res.status}: ${err.errorMessages?.join(', ') || res.statusText}`);
+      throw new Error(`Jira API error ${res.status}: ${err.errorMessages?.join(', ') || err.message || res.statusText}`);
     }
 
     const data = await res.json();
 
-    if (startAt === 0 && (!data.issues || data.issues.length === 0)) {
+    if (page === 1 && (!data.issues || data.issues.length === 0)) {
       throw new Error('No issues returned. Check your credentials and JQL.');
     }
 
     issues.push(...(data.issues || []));
-    setLoading(`Loaded ${issues.length} of ${data.total} tickets…`);
+    setLoading(`Loaded ${issues.length} tickets…`);
 
-    startAt += data.issues.length;
-    if (startAt >= data.total) break;
-  } while (true);
+    nextPageToken = data.nextPageToken || null;
+  } while (nextPageToken);
 
   return issues;
 }
