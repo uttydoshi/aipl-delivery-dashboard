@@ -130,18 +130,18 @@
     margin-bottom: 20px;
     flex-wrap: wrap;
   }
-  .date-range-bar label { font-size: 12px; font-weight: 600; color: #374151; }
+  .date-range-bar label { font-size: 15px; font-weight: 600; color: #374151; }
   .date-range-bar input[type="date"] {
     border: 1px solid #d1d5db;
     border-radius: 6px;
-    padding: 6px 10px;
-    font-size: 13px;
+    padding: 9px 14px;
+    font-size: 15px;
     background: #fff;
     color: #1a1a2e;
   }
   .date-range-bar button {
-    padding: 6px 14px;
-    font-size: 12px;
+    padding: 9px 18px;
+    font-size: 14px;
     font-weight: 600;
     border-radius: 6px;
     border: 1px solid #d1d5db;
@@ -267,6 +267,14 @@
     <div id="grid-container"></div>
   </div>
 
+  <!-- WIP chart below table -->
+  <div class="chart-card" id="wip-card" style="display:none;margin-top:16px;margin-bottom:0;">
+    <h2 style="margin-bottom:4px;">Cards In Progress</h2>
+    <p style="font-size:12px;color:#6b7280;margin-bottom:16px;">Working days since start — excludes weekends &amp; Victorian public holidays</p>
+    <div id="wip-chart"></div>
+    <div id="wip-legend"></div>
+  </div>
+
 </div>
 
 
@@ -274,6 +282,46 @@
 const JIRA_BASE = '/jira-api'; // proxied via server.js
 const JQL = 'project = AIPL and status = Done and issuetype not in (Epic,Milestone, Initiative) and "End date & time" IS NOT EMPTY and "End date & time" >= -90d ORDER BY "End date & time" DESC';
 const FIELDS = 'summary,labels,assignee,issuetype,customfield_12949,customfield_12950,customfield_13273,customfield_13275,customfield_14034';
+const WIP_JQL = 'project = AIPL AND issuetype != Epic AND "Start date & time" != empty and status in ("In Progress", "BLOCKED OR WAITING", "Code Review", "Check ACs") ORDER BY "Start date & time" ASC';
+
+// Victorian public holidays
+const VIC_HOLIDAYS = new Set([
+  '2025-01-01','2025-01-27','2025-03-10','2025-04-18','2025-04-19',
+  '2025-04-20','2025-04-21','2025-04-25','2025-06-09','2025-09-26',
+  '2025-11-04','2025-12-25','2025-12-26',
+  '2026-01-01','2026-01-26','2026-03-09','2026-04-03','2026-04-04',
+  '2026-04-05','2026-04-06','2026-04-25','2026-06-08','2026-09-25',
+  '2026-11-03','2026-12-25','2026-12-26',
+]);
+
+function localDateStr(d) {
+  // Returns YYYY-MM-DD in local timezone (avoids UTC shift issues)
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function isWorkingDay(d) {
+  const dow = d.getDay();
+  if (dow === 0 || dow === 6) return false;
+  return !VIC_HOLIDAYS.has(localDateStr(d));
+}
+
+function countWorkingDays(startStr) {
+  // Parse start date and normalise to midnight local time
+  const start = new Date(startStr);
+  start.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let count = 0;
+  const cur = new Date(start);
+  while (cur <= today) {
+    if (isWorkingDay(cur)) count++;
+    cur.setDate(cur.getDate() + 1);
+  }
+  return Math.max(count, 1); // minimum 1 day
+}
 
 let authHeader = '';
 
@@ -407,7 +455,88 @@ function buildRows(issues) {
   });
 }
 
+let wipChart = null;
 let cycleChart = null;
+
+async function fetchWipIssues() {
+  const res = await fetch(`${JIRA_BASE}/rest/api/3/search/jql`, {
+    method: 'POST',
+    headers: { 'x-jira-auth': authHeader, 'Accept': 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jql: WIP_JQL,
+      fields: ['summary', 'status', 'issuetype', 'assignee', 'customfield_12949'],
+      maxResults: 100
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`WIP fetch error ${res.status}: ${err.errorMessages?.join(', ') || res.statusText}`);
+  }
+  const data = await res.json();
+  return data.issues || [];
+}
+
+function renderWipChart(issues) {
+  const statusColors = {
+    'In Progress':        '#6366f1',
+    'BLOCKED OR WAITING': '#ef4444',
+    'Code Review':        '#f59e0b',
+    'Check ACs':          '#10b981',
+  };
+
+  const fmtStart = s => {
+    if (!s) return '';
+    const d = new Date(s);
+    return d.toLocaleDateString('en-AU', { day: '2-digit', month: 'short', year: '2-digit' });
+  };
+
+  const maxDays = Math.max(...issues.map(i => countWorkingDays(i.fields.customfield_12949)), 1);
+  const TARGET = 6;
+
+  document.getElementById('wip-card').style.display = 'block';
+
+  const rows = issues.map(i => {
+    const days = countWorkingDays(i.fields.customfield_12949);
+    const color = statusColors[i.fields.status?.name] || '#9ca3af';
+    const status = i.fields.status?.name || '';
+    const startFmt = fmtStart(i.fields.customfield_12949);
+    const barPct = Math.min((days / Math.max(maxDays, TARGET + 2)) * 100, 100);
+    const targetPct = Math.min((TARGET / Math.max(maxDays, TARGET + 2)) * 100, 100);
+    const overTarget = days > TARGET;
+
+    return `
+      <div style="display:flex;align-items:center;gap:12px;padding:4px 0;border-bottom:1px solid #f3f4f6;">
+        <div style="width:280px;flex-shrink:0;">
+          <a href="https://cultureamp.atlassian.net/browse/${i.key}" target="_blank"
+             style="font-size:12px;font-weight:700;color:#2563eb;text-decoration:none;">${i.key}</a>
+          <span style="font-size:12px;color:#374151;margin-left:6px;">${i.fields.summary.length > 42 ? i.fields.summary.slice(0,42)+'…' : i.fields.summary}</span>
+          <div style="font-size:11px;color:#9ca3af;margin-top:1px;">Started: ${startFmt}</div>
+        </div>
+        <div style="flex:1;position:relative;height:14px;background:#f3f4f6;border-radius:3px;overflow:visible;">
+          <div style="position:absolute;top:0;left:0;height:100%;width:${barPct}%;background:${color};border-radius:3px;"></div>
+          <!-- Target line -->
+          <div style="position:absolute;top:-3px;bottom:-3px;left:${targetPct}%;width:2px;background:#15803d;border-radius:1px;" title="Target: ${TARGET}d"></div>
+        </div>
+        <div style="width:90px;flex-shrink:0;text-align:right;">
+          <span style="font-size:13px;font-weight:700;color:${overTarget ? '#dc2626' : '#15803d'};">${days}d</span>
+          <span style="font-size:11px;color:#9ca3af;margin-left:4px;">${status}</span>
+        </div>
+      </div>`;
+  }).join('');
+
+  const targetPctLabel = Math.min((TARGET / Math.max(maxDays, TARGET + 2)) * 100, 100);
+  document.getElementById('wip-chart').innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;padding-bottom:6px;margin-bottom:2px;">
+      <div style="width:280px;flex-shrink:0;font-size:11px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:0.04em;">Card</div>
+      <div style="flex:1;position:relative;font-size:11px;color:#9ca3af;">
+        <span style="position:absolute;left:${targetPctLabel}%;transform:translateX(-50%);font-size:10px;font-weight:700;color:#15803d;white-space:nowrap;">▼ Target (${TARGET}d)</span>
+      </div>
+      <div style="width:90px;flex-shrink:0;text-align:right;font-size:11px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:0.04em;">Days</div>
+    </div>
+    ${rows}`;
+
+  document.getElementById('wip-legend').innerHTML = '';
+}
 let typeChart = null;
 let categoryChart = null;
 
@@ -418,6 +547,7 @@ function issueCategory(typeName) {
   if (['repo maintenance','tech debt'].includes(t)) return 'Planned Maintenance';
   return 'BAU';
 }
+
 
 function weekLabel(dateStr) {
   // Returns "DD Mon YY" of the Monday of that week
@@ -792,8 +922,19 @@ function setupDateRange(issues) {
   startEl.addEventListener('change', applyAndRefresh);
   endEl.addEventListener('change', applyAndRefresh);
   document.getElementById('reset-dates').addEventListener('click', () => {
+    // Reset date range
     startEl.value = toISO(dates[0]);
     endEl.value = toISO(dates[dates.length - 1]);
+    // Reset all filters
+    searchTerm = '';
+    labelFilter = '';
+    typeFilter = '';
+    const searchEl = document.getElementById('search-input');
+    const labelEl = document.getElementById('label-filter');
+    const typeEl = document.getElementById('type-filter');
+    if (searchEl) searchEl.value = '';
+    if (labelEl) labelEl.value = '';
+    if (typeEl) typeEl.value = '';
     applyAndRefresh();
   });
 }
@@ -823,7 +964,6 @@ function setupControls() {
 
 async function main() {
   try {
-    // Fetch all done issues (blocked days come directly from customfield_14034)
     const issues = await fetchAllIssues();
     allIssues = issues;
     document.getElementById('loading').style.display = 'none';
@@ -833,6 +973,12 @@ async function main() {
     populateFilters(issues);
     setupControls();
     renderGrid(issues);
+
+    // WIP chart loads independently — its failure won't affect anything else
+    fetchWipIssues()
+      .then(wipIssues => renderWipChart(wipIssues))
+      .catch(err => console.warn('WIP chart failed:', err.message));
+
   } catch (err) {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('error').style.display = 'block';
