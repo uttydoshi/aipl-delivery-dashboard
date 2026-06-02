@@ -8,7 +8,7 @@ const https = require('https');
 const fs = require('fs');
 const url = require('url');
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const JIRA_HOST = 'cultureamp.atlassian.net';
 
 const server = http.createServer((req, res) => {
