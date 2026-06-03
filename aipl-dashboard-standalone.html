@@ -39,6 +39,11 @@
     color: var(--text);
     padding: 24px;
   }
+  .page-wrapper {
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+  }
   h1 {
     font-size: 20px;
     font-weight: 700;
@@ -118,10 +123,23 @@
   .loading {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 40px;
+    justify-content: center;
+    gap: 16px;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     color: var(--text-muted);
-    font-size: 14px;
+    font-size: 35px;
+    font-weight: 600;
+    width: 90%;
+    text-align: center;
+  }
+  .loading .spinner {
+    width: 40px;
+    height: 40px;
+    border-width: 4px;
+    flex-shrink: 0;
   }
   .spinner {
     width: 18px; height: 18px;
@@ -261,8 +279,9 @@
   </button>
 </div>
 
-<h1 id="page-title">Delivery Stats</h1>
-<p class="subtitle">Done tickets · AI Platform · fetched live from Jira</p>
+<div class="page-wrapper">
+<h1 id="page-title" style="display:none">Delivery Stats</h1>
+<p class="subtitle" id="page-subtitle" style="display:none">Done tickets · fetched live from Jira</p>
 
 <div class="auth-card" id="auth-card">
   <label>Jira Email</label>
@@ -283,7 +302,10 @@
 
 <div id="summary" class="summary-bar"></div>
 
-<div id="loading" class="loading"><div class="spinner"></div> Loading tickets…</div>
+<div id="loading" class="loading" style="flex-direction:column;gap:20px;">
+  <div style="font-size:80px;line-height:1;">🔍✨</div>
+  <div style="display:flex;align-items:center;gap:14px;"><div class="spinner"></div> Finding the signal in the sprint noise…</div>
+</div>
 <div id="error" class="error" style="display:none"></div>
 <div id="chart-card" style="display:none;flex-direction:column;gap:16px;margin-bottom:24px;">
 
@@ -340,7 +362,7 @@
 <script>
 const JIRA_BASE = '/jira-api'; // proxied via server.js
 const JQL = 'project = AIPL and status = Done and issuetype not in (Epic,Milestone, Initiative) and "End date & time" IS NOT EMPTY and "End date & time" >= -90d ORDER BY "End date & time" DESC';
-const FIELDS = 'summary,labels,assignee,issuetype,customfield_12949,customfield_12950,customfield_13273,customfield_13275,customfield_14034';
+const FIELDS = 'summary,labels,assignee,issuetype,project,customfield_12949,customfield_12950,customfield_13273,customfield_13275,customfield_14034';
 const WIP_JQL = 'project = AIPL AND issuetype != Epic AND "Start date & time" != empty and status in ("In Progress", "BLOCKED OR WAITING", "Code Review", "Check ACs") ORDER BY "Start date & time" ASC';
 
 // Victorian public holidays
@@ -574,8 +596,8 @@ function renderWipChart(issues) {
         <div style="flex:1;position:relative;height:14px;background:#f3f4f6;border-radius:3px;overflow:visible;">
           <div style="position:absolute;top:0;left:0;height:100%;width:${barPct}%;background:${color};border-radius:3px;"></div>
           <div style="position:absolute;top:18px;left:0;font-size:10px;color:var(--text-muted);white-space:nowrap;">${startFmt}</div>
-          <!-- Target line -->
-          <div style="position:absolute;top:-3px;bottom:-3px;left:${targetPct}%;width:2px;background:#15803d;border-radius:1px;" title="Target: ${TARGET}d"></div>
+          <!-- Ideal line -->
+          <div style="position:absolute;top:-3px;bottom:-3px;left:${targetPct}%;width:2px;background:#15803d;border-radius:1px;" title="Ideal: ${TARGET}d"></div>
         </div>
         <div style="width:90px;flex-shrink:0;text-align:right;">
           <span style="font-size:13px;font-weight:700;color:${overTarget ? '#dc2626' : '#15803d'};">${days}d</span>
@@ -589,13 +611,20 @@ function renderWipChart(issues) {
     <div style="display:flex;align-items:center;gap:12px;padding-bottom:6px;margin-bottom:2px;">
       <div style="width:280px;flex-shrink:0;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;">Card</div>
       <div style="flex:1;position:relative;font-size:11px;color:var(--text-muted);">
-        <span style="position:absolute;left:${targetPctLabel}%;transform:translateX(-50%);font-size:10px;font-weight:700;color:#15803d;white-space:nowrap;">▼ Target (${TARGET}d)</span>
+        <span style="position:absolute;left:${targetPctLabel}%;transform:translateX(-50%);font-size:10px;font-weight:700;color:#15803d;white-space:nowrap;">▼ Ideal (${TARGET}d)</span>
       </div>
       <div style="width:90px;flex-shrink:0;text-align:right;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;">Days</div>
     </div>
     ${rows}`;
 
-  document.getElementById('wip-legend').innerHTML = '';
+  const seen = new Set();
+  const legendHtml = issues
+    .map(i => ({ label: i.fields.status?.name, color: statusColors[i.fields.status?.name] || '#9ca3af' }))
+    .filter(l => { if (seen.has(l.label)) return false; seen.add(l.label); return true; })
+    .map(l => `<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);margin-right:16px;">
+        <span style="width:12px;height:12px;border-radius:3px;background:${l.color};display:inline-block;flex-shrink:0;"></span>${l.label}
+      </span>`).join('');
+  document.getElementById('wip-legend').innerHTML = `<div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border);">${legendHtml}</div>`;
 }
 let typeChart = null;
 let categoryChart = null;
@@ -698,7 +727,7 @@ function renderChart(issues) {
     data: {
       datasets: [
       {
-        label: 'Target (6d)',
+        label: 'Ideal (6d)',
         data: targetLine,
         borderColor: '#15803d',
         borderWidth: 1.5,
@@ -732,7 +761,7 @@ function renderChart(issues) {
           callbacks: {
             title: items => `Week of ${weekOrder[items[0].parsed.x] || ''}`,
             label: item => {
-              if (item.dataset.label === 'Target (6d)') return `Target: 6d`;
+              if (item.dataset.label === 'Ideal (6d)') return `Ideal: 6d`;
 
               const { y, count } = item.raw;
               return `Avg: ${y}d (${count} card${count !== 1 ? 's' : ''})`;
@@ -1083,10 +1112,14 @@ async function main() {
     const issues = await fetchAllIssues();
     allIssues = issues;
     const projectName = issues[0]?.fields?.project?.name;
+    const titleEl = document.getElementById('page-title');
+    const subtitleEl = document.getElementById('page-subtitle');
     if (projectName) {
-      document.getElementById('page-title').textContent = `${projectName} Delivery Stats`;
+      titleEl.textContent = `${projectName} Delivery Stats`;
       document.title = `${projectName} Delivery Stats`;
     }
+    titleEl.style.display = '';
+    if (subtitleEl) subtitleEl.style.display = '';
     document.getElementById('loading').style.display = 'none';
     setupDateRange(issues);
     renderSummary(issues);
@@ -1160,5 +1193,6 @@ function toggleTheme() {
   }
 })();
 </script>
+</div><!-- end page-wrapper -->
 </body>
 </html>
