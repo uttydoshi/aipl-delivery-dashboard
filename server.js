@@ -1,5 +1,5 @@
 /**
- * Delivery Dashboards — Local Proxy Server
+ * AI Platform Control Center — Local Proxy Server
  * Run with: node server.js
  * Then open:
  *   http://localhost:3000/aipl-delivery-stats

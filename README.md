@@ -1,6 +1,6 @@
-# AIPL Delivery Stats Dashboard
+# AI Platform Control Center
 
-A live delivery metrics dashboard for the AI Platform (AIPL) Jira project. Fetches data directly from Jira and visualises cycle time trends, issue type breakdowns, and card-level delivery stats.
+Engineering dashboards for the AI Platform team — delivery metrics, LLM model usage, and more.
 
 ## Features
 
@@ -22,8 +22,8 @@ A live delivery metrics dashboard for the AI Platform (AIPL) Jira project. Fetch
 
 ```bash
 # Clone the repo
-git clone https://github.com/uttydoshi/aipl-delivery-dashboard.git
-cd aipl-delivery-dashboard
+git clone https://github.com/uttydoshi/ai-platform-control-center.git
+cd ai-platform-control-center
 
 # Start the proxy server
 node server.js
