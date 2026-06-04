@@ -2,21 +2,37 @@
 
 Engineering dashboards for the AI Platform team — delivery metrics, LLM model usage, and more.
 
-## Features
+## Dashboards
 
-- **Cycle time trend chart** — average cycle time by week with a 6-day target line and trend direction indicator
-- **Issue type & work category breakdowns** — 100% stacked horizontal bar charts
-- **Top stats** — avg cycle time, avg cycle time for never-blocked cards, avg lead time, avg weekly std dev (all colour-coded)
-- **Filterable cards table** — search by keyword, filter by label or issue type
-- **Date range picker** — narrow data to any custom window within the last 90 days
-- **Colour-coded thresholds** — green/yellow/orange/red based on configurable targets
+### 📊 Delivery Stats (`/aipl-delivery-stats`)
+Jira-powered delivery metrics for the AIPL project.
+
+- Average cycle time by week with trend direction indicator
+- Ideal cycle time reference line (6 days)
+- Cards in progress table with working days elapsed (excludes weekends & Victorian public holidays)
+- Issue type & work category breakdowns (100% stacked horizontal bar charts)
+- Top stats: avg cycle time, avg cycle time for never-blocked cards, avg lead time, avg weekly std dev — all colour-coded against targets
+- Filterable cards table — search by keyword, label, or issue type with sort and pagination
+- Date range picker — narrow data to any custom window within the last 90 days
+- Dark / light theme toggle
+
+### 🤖 LLM Model Usage (`/llm-model-usage`)
+DataDog-powered LLM observability dashboard.
+
+- Model usage, token consumption, and cost across applications and environments
+- Filter by time range (1d / 7d / 30d), environment, application, and model
+- Total tokens and cost summary stats
+- Dark / light theme toggle
+
+---
 
 ## Setup
 
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) (any recent version)
-- A Jira API token — generate one at [id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
+- **Jira** — API token from [id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
+- **DataDog** (for LLM dashboard) — API key and Application key from [app.datadoghq.com/organization-settings/api-keys](https://app.datadoghq.com/organization-settings/api-keys)
 
 ### Run locally
 
@@ -29,29 +45,25 @@ cd ai-platform-control-center
 node server.js
 ```
 
-Open **http://localhost:3000** in your browser.
+Open **http://localhost:3000** in your browser — this shows the landing page with links to all dashboards.
 
-On first load, enter your Jira email and API token. Credentials are saved to `localStorage` so you only need to do this once.
+Credentials are saved to `localStorage` so you only enter them once per browser.
+
+---
 
 ## Files
 
 | File | Description |
 |------|-------------|
-| `aipl-dashboard-standalone.html` | The dashboard — served by the local proxy server |
-| `server.js` | Tiny Node.js proxy server (no npm required) that forwards requests to the Jira REST API |
-| `aipl-dashboard.html` | Cowork/Claude artifact version (requires Cowork runtime) |
+| `server.js` | Local proxy server — routes requests and proxies Jira & DataDog APIs to avoid CORS |
+| `index.html` | Landing page with links to all dashboards |
+| `aipl-dashboard-standalone.html` | Delivery Stats dashboard (Jira) |
+| `llm-model-usage.html` | LLM Model Usage dashboard (DataDog) |
 
-## How it works
+## URLs
 
-The dashboard calls the Jira REST API (`POST /rest/api/3/search/jql`) via a local proxy server to avoid CORS restrictions. The proxy runs on `localhost:3000`, forwards requests to `cultureamp.atlassian.net` with your credentials, and serves the HTML file.
-
-## JQL query
-
-```
-project = AIPL
-  AND status = Done
-  AND issuetype NOT IN (Epic, Milestone, Initiative)
-  AND "End date & time" IS NOT EMPTY
-  AND "End date & time" >= -90d
-ORDER BY "End date & time" DESC
-```
+| Path | Dashboard |
+|------|-----------|
+| `http://localhost:3000` | Landing page |
+| `http://localhost:3000/aipl-delivery-stats` | Delivery Stats |
+| `http://localhost:3000/llm-model-usage` | LLM Model Usage |
