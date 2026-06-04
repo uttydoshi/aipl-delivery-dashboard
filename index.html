@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Platform Dashboards</title>
+<style>
+  :root { color-scheme: light; --bg: #f8f9fb; --surface: #fff; --border: #e5e7eb; --text: #1a1a2e; --text-muted: #6b7280; --text-faint: #9ca3af; }
+  body.dark { color-scheme: dark; --bg: #0f172a; --surface: #1e293b; --border: #334155; --text: #f1f5f9; --text-muted: #94a3b8; --text-faint: #64748b; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    transition: background 0.2s, color 0.2s;
+  }
+  .header { text-align: center; margin-bottom: 48px; }
+  .header h1 { font-size: 28px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+  .header p { font-size: 14px; color: var(--text-muted); }
+  .cards { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; max-width: 900px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    width: 380px;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.1);
+    border-color: #6366f1;
+  }
+  .card-icon { font-size: 48px; line-height: 1; }
+  .card-title { font-size: 18px; font-weight: 700; color: var(--text); }
+  .card-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+  .card-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  .tag {
+    display: inline-block;
+    background: var(--bg);
+    color: var(--text-muted);
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .tag.purple { background: #ede9fe; color: #5b21b6; }
+  .tag.green { background: #dcfce7; color: #166534; }
+  .card-arrow {
+    margin-top: auto;
+    font-size: 13px;
+    font-weight: 600;
+    color: #6366f1;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .footer { margin-top: 48px; font-size: 12px; color: var(--text-faint); }
+  .theme-btn { position: fixed; top: 16px; right: 20px; background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 7px 14px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+</style>
+</head>
+<body>
+
+<button class="theme-btn" onclick="toggleTheme()">
+  <span id="theme-icon">🌙</span><span id="theme-label">Dark</span>
+</button>
+
+<div class="header">
+  <h1>🛠️ AI Platform Dashboards</h1>
+  <p>Internal engineering dashboards for the AI Platform team</p>
+</div>
+
+<div class="cards">
+
+  <a class="card" href="/aipl-delivery-stats">
+    <div class="card-icon">📊</div>
+    <div>
+      <div class="card-title">Delivery Stats</div>
+      <div class="card-desc">Cycle times, lead times, WIP cards, and delivery trends for the AIPL Jira project. Filter by date range, label, or issue type.</div>
+    </div>
+    <div class="card-tags">
+      <span class="tag purple">Jira</span>
+      <span class="tag">Cycle Time</span>
+      <span class="tag">Lead Time</span>
+      <span class="tag">WIP</span>
+    </div>
+    <div class="card-arrow">Open dashboard →</div>
+  </a>
+
+  <a class="card" href="/llm-model-usage">
+    <div class="card-icon">🤖</div>
+    <div>
+      <div class="card-title">LLM Model Usage</div>
+      <div class="card-desc">Model usage, token consumption, and cost across applications and environments. See which models power which features.</div>
+    </div>
+    <div class="card-tags">
+      <span class="tag green">DataDog</span>
+      <span class="tag">Models</span>
+      <span class="tag">Tokens</span>
+      <span class="tag">Cost</span>
+    </div>
+    <div class="card-arrow">Open dashboard →</div>
+  </a>
+
+</div>
+
+<div class="footer">AI Platform · CultureAmp</div>
+
+<script>
+function toggleTheme() {
+  const isDark = document.body.classList.toggle('dark');
+  document.getElementById('theme-icon').textContent = isDark ? '☀️' : '🌙';
+  document.getElementById('theme-label').textContent = isDark ? 'Light' : 'Dark';
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+}
+if (localStorage.getItem('theme') === 'dark') {
+  document.body.classList.add('dark');
+  document.getElementById('theme-icon').textContent = '☀️';
+  document.getElementById('theme-label').textContent = 'Light';
+}
+</script>
+</body>
+</html>

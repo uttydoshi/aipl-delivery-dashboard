@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLM Model Usage · AI Platform</title>
+<script src="https://cdn.jsdelivr.net/npm/gridjs@5.0.2/dist/gridjs.umd.js" integrity="sha384-/XXDzxe4FsGiAe50i/u9pY/Vy/uX654MHB1xoc1BJNnH1WXHhqHga9g3q5tF4gj7" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridjs@5.0.2/dist/theme/mermaid.min.css" integrity="sha384-K3RzVFnmHBqPN4NdFRDNi6RSnLpg83l/J3x0MXvTlDNEZj/bq0NvgDp/GN7KDVG" crossorigin="anonymous">
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f8f9fb; --surface: #ffffff; --border: #e5e7eb;
+    --text: #1a1a2e; --text-muted: #6b7280; --text-faint: #9ca3af;
+    --input-bg: #ffffff; --grid-head: #f3f4f6; --grid-hover: #f9fafb;
+  }
+  body.dark {
+    color-scheme: dark;
+    --bg: #0f172a; --surface: #1e293b; --border: #334155;
+    --text: #f1f5f9; --text-muted: #e2e8f0; --text-faint: #cbd5e1;
+    --input-bg: #1e293b; --grid-head: #1e293b; --grid-hover: #334155;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 24px; }
+  .page-wrapper { max-width: 1400px; margin: 0 auto; }
+  h1 { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 4px; display: none; }
+  .subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; display: none; }
+  .auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .auth-card label { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; }
+  .auth-card input { border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 13px; background: var(--input-bg); color: var(--text); flex: 1; min-width: 200px; }
+  .auth-card button { padding: 7px 16px; font-size: 13px; font-weight: 600; border-radius: 6px; border: none; background: #6366f1; color: #fff; cursor: pointer; }
+  .auth-card button:hover { background: #4f46e5; }
+  .auth-note { font-size: 11px; color: var(--text-faint); width: 100%; }
+  .loading { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--text-muted); font-size: 35px; font-weight: 600; width: 90%; text-align: center; }
+  .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: #6366f1; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error { color: #dc2626; padding: 20px; font-size: 13px; background: #fef2f2; border-radius: 8px; white-space: pre-wrap; word-break: break-all; }
+  .controls { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; flex-wrap: wrap; }
+  .controls select, .controls input { border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 13px; background: var(--input-bg); color: var(--text); }
+  .time-btn { padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; }
+  .time-btn.active { background: #6366f1; color: #fff; border-color: #6366f1; }
+  #grid-container .gridjs-container { border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+  #grid-container .gridjs-head { background: var(--grid-head); }
+  #grid-container .gridjs-th { font-size: 12px; font-weight: 600; color: var(--text); padding: 10px 12px; text-align: left; vertical-align: middle; }
+  #grid-container .gridjs-th-content { display: inline; vertical-align: middle; }
+  #grid-container .gridjs-sort { display: inline-flex !important; vertical-align: middle; margin-left: 4px; }
+  #grid-container .gridjs-sort-neutral::before,
+  #grid-container .gridjs-sort-neutral::after { border-color: #111827 transparent; }
+  #grid-container .gridjs-sort-asc::before { border-color: transparent transparent #111827; }
+  #grid-container .gridjs-sort-desc::after { border-color: #111827 transparent transparent; }
+  body.dark #grid-container .gridjs-sort-neutral::before,
+  body.dark #grid-container .gridjs-sort-neutral::after { border-color: #f1f5f9 transparent; }
+  body.dark #grid-container .gridjs-sort-asc::before { border-color: transparent transparent #f1f5f9; }
+  body.dark #grid-container .gridjs-sort-desc::after { border-color: #f1f5f9 transparent transparent; }
+  #grid-container .gridjs-td { font-size: 12px; padding: 10px 12px; vertical-align: top; }
+  #grid-container .gridjs-tr:hover td { background: var(--grid-hover); }
+  #grid-container .gridjs-pagination { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; padding: 10px 12px; }
+  #grid-container .gridjs-pagination button { margin: 0 4px; }
+  #grid-container .gridjs-pagination button.gridjs-currentPage { font-weight: 700; }
+  body.dark #grid-container .gridjs-container { background: var(--surface); border-color: var(--border); }
+  body.dark #grid-container .gridjs-head { background: var(--grid-head); }
+  body.dark #grid-container .gridjs-th { color: var(--text); background: var(--grid-head); }
+  body.dark #grid-container .gridjs-td { color: var(--text); background: var(--surface); }
+  body.dark #grid-container .gridjs-tr:hover td { background: var(--grid-hover); }
+  body.dark #grid-container .gridjs-footer { background: var(--surface); border-color: var(--border); }
+  body.dark #grid-container .gridjs-pagination button { background: var(--surface); color: var(--text); border-color: var(--border); }
+  .env-pill { display: inline-block; border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
+  .pill-eu { background: #dbeafe; color: #1e40af; }
+  .pill-us { background: #dcfce7; color: #166534; }
+  .pill-au { background: #fef3c7; color: #92400e; }
+  .pill-other { background: #f3f4f6; color: #374151; }
+  .provider-icon { display: inline-flex; align-items: center; gap: 4px; }
+  .nav-link { font-size: 12px; color: #6366f1; text-decoration: none; margin-bottom: 16px; display: inline-block; }
+  .nav-link:hover { text-decoration: underline; }
+  .summary-bar { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 20px; min-width: 140px; }
+  .stat-card .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-card .value { font-size: 26px; font-weight: 700; color: var(--text); margin-top: 4px; }
+  .stat-card .unit { font-size: 12px; color: var(--text-faint); }
+</style>
+</head>
+<body>
+
+<div style="position:fixed;top:16px;right:20px;z-index:100;">
+  <button id="theme-toggle" onclick="toggleTheme()" style="background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+    <span id="theme-icon">🌙</span><span id="theme-label">Dark</span>
+  </button>
+</div>
+
+<div class="page-wrapper">
+<a href="/" style="font-size:12px;color:#6366f1;text-decoration:none;display:inline-block;margin-bottom:16px;">← Home</a>
+<h1 id="page-title">LLM Model Usage</h1>
+<p class="subtitle" id="page-subtitle">Model usage, token consumption &amp; cost across applications and environments · fetched live from DataDog</p>
+
+<div class="auth-card" id="auth-card">
+  <label>DD API Key</label>
+  <input type="password" id="dd-api-key" placeholder="DataDog API key">
+  <label>DD App Key</label>
+  <input type="password" id="dd-app-key" placeholder="DataDog application key">
+  <button id="load-btn">Load Data</button>
+  <span class="auth-note">Generate keys at: app.datadoghq.com/organization-settings/api-keys</span>
+</div>
+
+<div id="loading" class="loading" style="display:none;">
+  <div style="font-size:60px;line-height:1;">🔍✨</div>
+  <div style="display:flex;align-items:center;gap:14px;"><div class="spinner"></div> Fetching LLM usage from DataDog…</div>
+</div>
+<div id="error" class="error" style="display:none;"></div>
+
+<div id="dashboard" style="display:none;">
+  <div id="summary" class="summary-bar"></div>
+  <div class="controls" id="controls">
+    <div style="display:flex;gap:6px;">
+      <button class="time-btn active" data-days="1">1d</button>
+      <button class="time-btn" data-days="7">7d</button>
+      <button class="time-btn" data-days="30">30d</button>
+    </div>
+    <select id="env-filter"><option value="">All environments</option></select>
+    <select id="app-filter"><option value="">All applications</option></select>
+    <select id="model-filter"><option value="">All models</option></select>
+  </div>
+  <div id="grid-container"></div>
+</div>
+
+</div><!-- end page-wrapper -->
+
+<script>
+const DD_BASE = '/dd-api';
+let ddApiKey = '';
+let ddAppKey = '';
+let allRows = [];
+let grid = null;
+let activeDays = 1;
+let envFilter = '';
+let appFilter = '';
+let modelFilter = '';
+
+function envPillClass(env) {
+  if (env.includes('eu')) return 'pill-eu';
+  if (env.includes('us')) return 'pill-us';
+  if (env.includes('au')) return 'pill-au';
+  return 'pill-other';
+}
+
+function providerLabel(provider) {
+  if (provider === 'vertex_ai') return '🟢 Vertex AI';
+  if (provider === 'bedrock') return '🟠 Bedrock';
+  return provider || '—';
+}
+
+async function fetchMetric(query, fromSec, toSec) {
+  const url = `${DD_BASE}/api/v1/query?query=${encodeURIComponent(query)}&from=${fromSec}&to=${toSec}`;
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: { 'x-dd-api-key': ddApiKey, 'x-dd-app-key': ddAppKey, 'Accept': 'application/json' }
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`DataDog API error ${res.status}: ${JSON.stringify(err).slice(0, 300)}`);
+  }
+  return res.json();
+}
+
+async function fetchMetrics(fromSec, toSec) {
+  const [tokensData, costData] = await Promise.all([
+    fetchMetric(`sum:llm_proxy.llm_interaction.otel.prompt_tokens{*} by {ca.llm_proxy.proxy_user_id,ca.llm_proxy.model_alias,gen_ai.request.model,env}.as_count()`, fromSec, toSec),
+    fetchMetric(`sum:llm_proxy.llm_interaction.otel.cost{*} by {ca.llm_proxy.proxy_user_id,ca.llm_proxy.model_alias,env}.as_count()`, fromSec, toSec),
+  ]);
+  return { tokensData, costData };
+}
+
+
+function processMetrics({ tokensData, costData }) {
+  const series = tokensData?.series || [];
+
+  // Build cost lookup: key → total cost
+  const costMap = {};
+  for (const s of (costData?.series || [])) {
+    const tagList = s.tag_set || [];
+    const getTag = prefix => { const t = tagList.find(t => t.startsWith(prefix + ':')); return t ? t.slice(prefix.length + 1).trim() : '—'; };
+    const key = `${getTag('ca.llm_proxy.proxy_user_id')}|${getTag('env')}|${getTag('ca.llm_proxy.model_alias')}`;
+    const total = (s.pointlist || []).reduce((sum, pt) => sum + (pt[1] || 0), 0);
+    costMap[key] = (costMap[key] || 0) + total;
+  }
+  const map = {};
+
+  for (const s of series) {
+    const tagList = s.tag_set || [];
+    const getTag = prefix => {
+      const t = tagList.find(t => t.startsWith(prefix + ':'));
+      return t ? t.slice(prefix.length + 1).trim() : '—';
+    };
+
+    const app = getTag('ca.llm_proxy.proxy_user_id');
+    const modelAlias = getTag('ca.llm_proxy.model_alias');
+    const modelName = getTag('gen_ai.request.model');
+    const env = getTag('env');
+
+    let provider = '—';
+    if (modelAlias.includes('gemini') || modelAlias.includes('vertex') || modelName.includes('gemini') || modelName.includes('vertex')) provider = '🟢 Vertex AI';
+    else if (modelAlias.includes('claude') || modelAlias.includes('sonnet') || modelAlias.includes('haiku') || modelAlias.includes('bedrock') || modelName.includes('claude') || modelName.includes('anthropic')) provider = '🟠 Bedrock';
+
+    const totalTokens = (s.pointlist || []).reduce((sum, pt) => sum + (pt[1] || 0), 0);
+
+    const key = `${app}|${env}|${modelAlias}`;
+    if (!map[key]) {
+      map[key] = { app, env, modelAlias, modelName, provider, totalTokens: 0, cost: 0 };
+    }
+    map[key].totalTokens += totalTokens;
+    map[key].cost += costMap[key] || 0;
+  }
+
+  return Object.values(map)
+    .filter(r => r.app !== '—' && r.modelAlias !== '—')
+    .sort((a, b) => b.totalTokens - a.totalTokens);
+}
+
+function populateFilters(rows) {
+  const envs = [...new Set(rows.map(r => r.env))].sort();
+  const apps = [...new Set(rows.map(r => r.app))].sort();
+  const models = [...new Set(rows.map(r => r.modelName && r.modelName !== '—' ? r.modelName : r.modelAlias))].sort();
+  const envSel = document.getElementById('env-filter');
+  const appSel = document.getElementById('app-filter');
+  const modelSel = document.getElementById('model-filter');
+  envSel.innerHTML = '<option value="">All environments</option>';
+  appSel.innerHTML = '<option value="">All applications</option>';
+  modelSel.innerHTML = '<option value="">All models</option>';
+  envs.forEach(e => { const o = document.createElement('option'); o.value = e; o.textContent = e; envSel.appendChild(o); });
+  apps.forEach(a => { const o = document.createElement('option'); o.value = a; o.textContent = a; appSel.appendChild(o); });
+  models.forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = m; modelSel.appendChild(o); });
+}
+
+function filterRows() {
+  return allRows.filter(r => {
+    if (envFilter && r.env !== envFilter) return false;
+    if (appFilter && r.app !== appFilter) return false;
+    if (modelFilter) {
+      const displayModel = r.modelName && r.modelName !== '—' ? r.modelName : r.modelAlias;
+      if (displayModel !== modelFilter) return false;
+    }
+    return true;
+  });
+}
+
+function renderSummary(rows) {
+  const totalTokens = rows.reduce((s, r) => s + r.totalTokens, 0);
+  const totalCost = rows.reduce((s, r) => s + r.cost, 0);
+  const uniqueModels = new Set(rows.map(r => r.modelAlias)).size;
+  const uniqueApps = new Set(rows.map(r => r.app)).size;
+  const uniqueEnvs = new Set(rows.map(r => r.env)).size;
+  document.getElementById('summary').innerHTML = `
+    <div class="stat-card"><div class="label">Total Tokens</div><div class="value">${(totalTokens/1000).toFixed(0) + 'k'}</div></div>
+    <div class="stat-card"><div class="label">Models</div><div class="value">${uniqueModels}</div></div>
+    <div class="stat-card"><div class="label">Applications</div><div class="value">${uniqueApps}</div></div>
+    <div class="stat-card"><div class="label">Environments</div><div class="value">${uniqueEnvs}</div></div>
+    <div class="stat-card"><div class="label">Total Cost</div><div class="value">$${totalCost.toFixed(2)}</div></div>
+  `;
+}
+
+function renderGrid(rows) {
+  const data = rows.map(r => [
+    r.app,
+    r.env,
+    r.modelName && r.modelName !== '—' ? r.modelName : r.modelAlias,
+    r.modelAlias,
+    r.provider,
+    Math.round(r.totalTokens).toLocaleString(),
+    r.cost > 0 ? '$' + r.cost.toFixed(4) : '—',
+  ]);
+
+  const columns = [
+    { name: 'Application', width: '14%' },
+    { name: 'Environment', width: '11%', formatter: cell => gridjs.html(`<span class="env-pill ${envPillClass(cell)}">${cell}</span>`) },
+    { name: 'Model', width: '22%' },
+    { name: 'Alias', width: '24%' },
+    { name: 'Provider', width: '11%' },
+    { name: 'Total Tokens', width: '10%' },
+    { name: 'Cost (USD)', width: '8%' },
+  ];
+
+  if (grid) {
+    grid.updateConfig({ columns, data }).forceRender();
+  } else {
+    grid = new gridjs.Grid({ columns, data, sort: true, pagination: { limit: 20, buttonsCount: 20 }, style: { table: { 'white-space': 'normal' } } });
+    grid.render(document.getElementById('grid-container'));
+  }
+}
+
+async function loadData() {
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('error').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'none';
+
+  try {
+    const now = Math.floor(Date.now() / 1000);
+    const fromSec = now - activeDays * 86400;
+    const data = await fetchMetrics(fromSec, now);
+    allRows = processMetrics(data);
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('page-title').style.display = 'block';
+    document.getElementById('page-subtitle').style.display = 'block';
+    document.getElementById('dashboard').style.display = 'block';
+
+    populateFilters(allRows);
+    const filtered = filterRows();
+    renderSummary(filtered);
+    renderGrid(filtered);
+  } catch (err) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('error').style.display = 'block';
+    document.getElementById('error').textContent = 'Error: ' + err.message;
+  }
+}
+
+// Auth
+const savedApiKey = localStorage.getItem('dd_api_key') || '';
+const savedAppKey = localStorage.getItem('dd_app_key') || '';
+if (savedApiKey) document.getElementById('dd-api-key').value = savedApiKey;
+if (savedAppKey) document.getElementById('dd-app-key').value = savedAppKey;
+
+document.getElementById('load-btn').addEventListener('click', () => {
+  ddApiKey = document.getElementById('dd-api-key').value.trim();
+  ddAppKey = document.getElementById('dd-app-key').value.trim();
+  if (!ddApiKey || !ddAppKey) { alert('Please enter both DataDog API key and Application key.'); return; }
+  localStorage.setItem('dd_api_key', ddApiKey);
+  localStorage.setItem('dd_app_key', ddAppKey);
+  loadData();
+});
+
+// Auto-load if saved
+if (savedApiKey && savedAppKey) {
+  ddApiKey = savedApiKey;
+  ddAppKey = savedAppKey;
+  loadData();
+}
+
+// Time range buttons
+document.querySelectorAll('.time-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeDays = parseInt(btn.dataset.days);
+    loadData();
+  });
+});
+
+// Filters
+document.getElementById('env-filter').addEventListener('change', e => {
+  envFilter = e.target.value;
+  const filtered = filterRows();
+  renderSummary(filtered);
+  renderGrid(filtered);
+});
+document.getElementById('app-filter').addEventListener('change', e => {
+  appFilter = e.target.value;
+  const filtered = filterRows();
+  renderSummary(filtered);
+  renderGrid(filtered);
+});
+document.getElementById('model-filter').addEventListener('change', e => {
+  modelFilter = e.target.value;
+  const filtered = filterRows();
+  renderSummary(filtered);
+  renderGrid(filtered);
+});
+
+// Theme
+function toggleTheme() {
+  const isDark = document.body.classList.toggle('dark');
+  document.getElementById('theme-icon').textContent = isDark ? '☀️' : '🌙';
+  document.getElementById('theme-label').textContent = isDark ? 'Light' : 'Dark';
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+}
+(function() {
+  if (localStorage.getItem('theme') === 'dark') {
+    document.body.classList.add('dark');
+    document.addEventListener('DOMContentLoaded', () => {
+      const icon = document.getElementById('theme-icon');
+      const label = document.getElementById('theme-label');
+      if (icon) icon.textContent = '☀️';
+      if (label) label.textContent = 'Light';
+    });
+  }
+})();
+</script>
+</body>
+</html>
