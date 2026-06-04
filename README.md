@@ -31,8 +31,8 @@ DataDog-powered LLM observability dashboard.
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) (any recent version)
-- **Jira** — API token from [id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
-- **DataDog** (for LLM dashboard) — [API key](https://app.datadoghq.com/organization-settings/api-keys) and [Application key](https://app.datadoghq.com/organization-settings/application-keys)
+- **Jira** — API token `delivery-stats-fetcher` from [id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
+- **DataDog** (for LLM dashboard) — [API key](https://app.datadoghq.com/organization-settings/api-keys) `ai-platform-claude-integration` and [Application key](https://app.datadoghq.com/organization-settings/application-keys) `ai-platform-claude-integration`
 
 ### Run locally
 
