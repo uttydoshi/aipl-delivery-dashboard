@@ -32,7 +32,7 @@ DataDog-powered LLM observability dashboard.
 
 - [Node.js](https://nodejs.org/) (any recent version)
 - **Jira** — API token from [id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
-- **DataDog** (for LLM dashboard) — API key and Application key from [app.datadoghq.com/organization-settings/api-keys](https://app.datadoghq.com/organization-settings/api-keys)
+- **DataDog** (for LLM dashboard) — [API key](https://app.datadoghq.com/organization-settings/api-keys) and [Application key](https://app.datadoghq.com/organization-settings/application-keys)
 
 ### Run locally
 
