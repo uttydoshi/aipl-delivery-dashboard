@@ -52,6 +52,22 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Serve model deprecations dashboard
+  if (parsedUrl.pathname === '/model-deprecations') {
+    const file = fs.readFileSync('./model-deprecations.html', 'utf8');
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(file);
+    return;
+  }
+
+  // Serve model deprecations JSON data
+  if (parsedUrl.pathname === '/model-deprecations.json') {
+    const file = fs.readFileSync('./model-deprecations.json', 'utf8');
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+    res.end(file);
+    return;
+  }
+
   // Proxy Jira API requests
   if (parsedUrl.pathname.startsWith('/jira-api/')) {
     const jiraPath = parsedUrl.pathname.replace('/jira-api', '') +

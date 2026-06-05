@@ -1,0 +1,69 @@
+name: Model Deprecation Check
+
+on:
+  schedule:
+    # Runs daily at 9am AEST (11pm UTC previous day)
+    - cron: '0 23 * * *'
+  workflow_dispatch: # Allow manual trigger from GitHub Actions UI
+
+jobs:
+  check-deprecations:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Needed to commit updated JSON
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run scraper
+        id: scrape
+        run: node scripts/scrape-deprecations.js
+        continue-on-error: true  # Don't stop pipeline on scrape failure
+
+      - name: Alert on scrape failure
+        if: steps.scrape.outcome == 'failure'
+        run: |
+          echo "⚠️ Scraper failed — model-deprecations.json may be stale."
+          echo "Manual check of deprecation dates recommended."
+          # TODO: SLACK — uncomment when SLACK_WEBHOOK_URL secret is configured
+          # curl -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+          #   -H 'Content-type: application/json' \
+          #   --data '{"channel":"#temp_help_ai_platform","text":"⚠️ *AI Platform Control Center*: Model deprecation scraper failed. Please manually check AWS and Google deprecation pages.\n• AWS: https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html\n• Google: https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"}'
+
+      - name: Commit updated deprecation data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add model-deprecations.json
+          git diff --staged --quiet || git commit -m "chore: update model deprecation dates [skip ci]"
+          git push
+        continue-on-error: true
+
+      - name: Check for upcoming deprecations
+        id: check
+        run: node scripts/check-deprecations.js
+        continue-on-error: true  # Exit code 1 = urgent models found, but don't fail the whole job
+
+      - name: Alert on upcoming deprecations
+        if: steps.check.outcome == 'failure'
+        run: |
+          echo "🔴 URGENT: One or more models deprecating within 30 days!"
+          # TODO: SLACK — uncomment when SLACK_WEBHOOK_URL secret is configured
+          # curl -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+          #   -H 'Content-type: application/json' \
+          #   --data '{"channel":"#temp_help_ai_platform","text":"🔴 *URGENT — LLM Model Deprecation*: One or more models are deprecating within 30 days. Check the dashboard: http://localhost:3000/model-deprecations"}'
+
+      - name: Alert on workflow failure
+        if: failure()
+        run: |
+          echo "❌ Deprecation check workflow encountered an unexpected error."
+          # TODO: SLACK — uncomment when SLACK_WEBHOOK_URL secret is configured
+          # curl -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+          #   -H 'Content-type: application/json' \
+          #   --data '{"channel":"#temp_help_ai_platform","text":"❌ *AI Platform Control Center*: The daily model deprecation check workflow failed unexpectedly. Please check GitHub Actions."}'

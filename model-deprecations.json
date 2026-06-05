@@ -1,0 +1,86 @@
+{
+  "last_updated": "2026-06-05T00:00:00Z",
+  "scrape_status": "manual",
+  "models": [
+    {
+      "provider": "AWS Bedrock",
+      "model_id": "anthropic.claude-v2:1",
+      "model_name": "Claude 2.1",
+      "deprecation_date": "2025-03-31",
+      "end_of_life_date": "2025-06-30",
+      "status": "deprecated",
+      "notes": "",
+      "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
+    },
+    {
+      "provider": "AWS Bedrock",
+      "model_id": "anthropic.claude-instant-v1",
+      "model_name": "Claude Instant 1.2",
+      "deprecation_date": "2025-03-31",
+      "end_of_life_date": "2025-06-30",
+      "status": "deprecated",
+      "notes": "",
+      "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
+    },
+    {
+      "provider": "AWS Bedrock",
+      "model_id": "anthropic.claude-3-sonnet-20240229-v1:0",
+      "model_name": "Claude 3 Sonnet",
+      "deprecation_date": "2025-09-30",
+      "end_of_life_date": "2025-12-31",
+      "status": "active",
+      "notes": "",
+      "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
+    },
+    {
+      "provider": "AWS Bedrock",
+      "model_id": "anthropic.claude-3-haiku-20240307-v1:0",
+      "model_name": "Claude 3 Haiku",
+      "deprecation_date": "2025-12-31",
+      "end_of_life_date": "2026-03-31",
+      "status": "active",
+      "notes": "",
+      "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "gemini-1.0-pro",
+      "model_name": "Gemini 1.0 Pro",
+      "deprecation_date": "2025-04-09",
+      "end_of_life_date": "2025-04-09",
+      "status": "deprecated",
+      "notes": "",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "gemini-1.5-pro-001",
+      "model_name": "Gemini 1.5 Pro 001",
+      "deprecation_date": "2026-05-24",
+      "end_of_life_date": "2026-05-24",
+      "status": "active",
+      "notes": "",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "gemini-1.5-flash-001",
+      "model_name": "Gemini 1.5 Flash 001",
+      "deprecation_date": "2026-05-24",
+      "end_of_life_date": "2026-05-24",
+      "status": "active",
+      "notes": "",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "gemini-2.0-flash-001",
+      "model_name": "Gemini 2.0 Flash 001",
+      "deprecation_date": "2027-02-05",
+      "end_of_life_date": "2027-02-05",
+      "status": "active",
+      "notes": "",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    }
+  ]
+}
