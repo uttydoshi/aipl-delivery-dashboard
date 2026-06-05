@@ -189,7 +189,7 @@
       "deprecation_date": "19-Dec-2025",
       "end_of_life_date": "19-Jun-2026",
       "notes": "",
-      "status": "deprecated",
+      "status": "active",
       "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
     },
     {
@@ -199,7 +199,7 @@
       "deprecation_date": "30-Dec-2025",
       "end_of_life_date": "30-Jun-2026",
       "notes": "",
-      "status": "deprecated",
+      "status": "active",
       "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
     },
     {
@@ -209,7 +209,7 @@
       "deprecation_date": "07-Jan-2026",
       "end_of_life_date": "07-Jul-2026",
       "notes": "",
-      "status": "deprecated",
+      "status": "active",
       "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
     },
     {
@@ -219,7 +219,7 @@
       "deprecation_date": "07-Jan-2026",
       "end_of_life_date": "07-Jul-2026",
       "notes": "",
-      "status": "deprecated",
+      "status": "active",
       "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
     },
     {
@@ -229,7 +229,7 @@
       "deprecation_date": "07-Jan-2026",
       "end_of_life_date": "07-Jul-2026",
       "notes": "",
-      "status": "deprecated",
+      "status": "active",
       "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
     },
     {
@@ -239,7 +239,7 @@
       "deprecation_date": "07-Jan-2026",
       "end_of_life_date": "07-Jul-2026",
       "notes": "",
-      "status": "deprecated",
+      "status": "active",
       "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
     },
     {
@@ -249,7 +249,7 @@
       "deprecation_date": "07-Jan-2026",
       "end_of_life_date": "07-Jul-2026",
       "notes": "",
-      "status": "deprecated",
+      "status": "active",
       "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
     },
     {
@@ -259,7 +259,7 @@
       "deprecation_date": "30-Jan-2026",
       "end_of_life_date": "30-Jul-2026",
       "notes": "",
-      "status": "deprecated",
+      "status": "active",
       "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
     },
     {
@@ -269,7 +269,7 @@
       "deprecation_date": "30-Jan-2026",
       "end_of_life_date": "30-Jul-2026",
       "notes": "",
-      "status": "deprecated",
+      "status": "active",
       "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
     },
     {
@@ -279,7 +279,7 @@
       "deprecation_date": "30-Jan-2026",
       "end_of_life_date": "30-Jul-2026",
       "notes": "",
-      "status": "deprecated",
+      "status": "active",
       "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
     },
     {
@@ -289,7 +289,7 @@
       "deprecation_date": "30-Jan-2026",
       "end_of_life_date": "30-Jul-2026",
       "notes": "",
-      "status": "deprecated",
+      "status": "active",
       "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
     },
     {
@@ -299,7 +299,7 @@
       "deprecation_date": "19-Feb-2026",
       "end_of_life_date": "19-Aug-2026",
       "notes": "",
-      "status": "deprecated",
+      "status": "active",
       "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
     },
     {
@@ -309,7 +309,7 @@
       "deprecation_date": "19-Feb-2026",
       "end_of_life_date": "19-Aug-2026",
       "notes": "",
-      "status": "deprecated",
+      "status": "active",
       "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
     },
     {
@@ -319,7 +319,7 @@
       "deprecation_date": "10-Mar-2026",
       "end_of_life_date": "10-Sep-2026",
       "notes": "",
-      "status": "deprecated",
+      "status": "active",
       "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
     },
     {
@@ -329,7 +329,7 @@
       "deprecation_date": "13-Mar-2026",
       "end_of_life_date": "14-Sep-2026",
       "notes": "",
-      "status": "deprecated",
+      "status": "active",
       "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
     },
     {
@@ -339,7 +339,7 @@
       "deprecation_date": "13-Mar-2026",
       "end_of_life_date": "14-Sep-2026",
       "notes": "",
-      "status": "deprecated",
+      "status": "active",
       "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
     },
     {
@@ -349,7 +349,7 @@
       "deprecation_date": "30-Mar-2026",
       "end_of_life_date": "30-Sep-2026",
       "notes": "",
-      "status": "deprecated",
+      "status": "active",
       "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
     },
     {
@@ -359,7 +359,7 @@
       "deprecation_date": "30-Mar-2026",
       "end_of_life_date": "30-Sep-2026",
       "notes": "",
-      "status": "deprecated",
+      "status": "active",
       "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
     },
     {
@@ -369,7 +369,7 @@
       "deprecation_date": "30-Mar-2026",
       "end_of_life_date": "30-Sep-2026",
       "notes": "",
-      "status": "deprecated",
+      "status": "active",
       "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
     },
     {
@@ -379,7 +379,7 @@
       "deprecation_date": "14-Apr-2026",
       "end_of_life_date": "14-Oct-2026",
       "notes": "",
-      "status": "deprecated",
+      "status": "active",
       "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
     },
     {
@@ -389,7 +389,7 @@
       "deprecation_date": "26-May-2026",
       "end_of_life_date": "26-Nov-2026",
       "notes": "",
-      "status": "deprecated",
+      "status": "active",
       "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
     },
     {
@@ -399,7 +399,7 @@
       "deprecation_date": "26-May-2026",
       "end_of_life_date": "26-Nov-2026",
       "notes": "",
-      "status": "deprecated",
+      "status": "active",
       "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
     },
     {

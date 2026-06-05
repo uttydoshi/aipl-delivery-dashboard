@@ -106,9 +106,14 @@ let statusFilter = '';
 
 function daysUntil(dateStr) {
   if (!dateStr || dateStr === '9999-12-31') return 99999;
-  const target = new Date(dateStr); // handles both "dd-Mon-yyyy" and "yyyy-mm-dd"
+  const target = new Date(dateStr);
   const now = new Date(); now.setHours(0,0,0,0);
   return Math.ceil((target - now) / 86400000);
+}
+
+// For urgency, always use EOL date (most important date for users)
+function daysUntilEol(model) {
+  return daysUntil(model.end_of_life_date);
 }
 
 function urgencyLabel(days, dateStr) {
@@ -130,6 +135,7 @@ function filterModels() {
   return allModels.filter(m => {
     const days = daysUntil(m.deprecation_date);
     if (providerFilter && m.provider !== providerFilter) return false;
+    const days = daysUntilEol(m);
     if (statusFilter === 'urgent'  && !(days >= 0 && days <= 30))  return false;
     if (statusFilter === 'warning' && !(days > 30 && days <= 90))  return false;
     if (statusFilter === 'safe'    && days <= 90)                  return false;
@@ -139,10 +145,10 @@ function filterModels() {
 }
 
 function renderSummary(models) {
-  const urgent  = models.filter(m => { const d = daysUntil(m.deprecation_date); return d >= 0 && d <= 30; }).length;
-  const warning = models.filter(m => { const d = daysUntil(m.deprecation_date); return d > 30 && d <= 90; }).length;
-  const safe    = models.filter(m => daysUntil(m.deprecation_date) > 90).length;
-  const past    = models.filter(m => daysUntil(m.deprecation_date) < 0).length;
+  const urgent  = models.filter(m => { const d = daysUntilEol(m); return d >= 0 && d <= 30; }).length;
+  const warning = models.filter(m => { const d = daysUntilEol(m); return d > 30 && d <= 90; }).length;
+  const safe    = models.filter(m => daysUntilEol(m) > 90).length;
+  const past    = models.filter(m => daysUntilEol(m) < 0).length;
   document.getElementById('summary').innerHTML = `
     <div class="stat-card"><div class="label">Total Models</div><div class="value">${models.length}</div></div>
     <div class="stat-card"><div class="label">🔴 Urgent</div><div class="value" style="color:#dc2626">${urgent}</div></div>
@@ -153,11 +159,11 @@ function renderSummary(models) {
 }
 
 function renderGrid(models) {
-  const sorted = [...models].sort((a, b) => urgencyKey(daysUntil(a.deprecation_date)) - urgencyKey(daysUntil(b.deprecation_date)) || a.deprecation_date.localeCompare(b.deprecation_date));
+  const sorted = [...models].sort((a, b) => urgencyKey(daysUntilEol(a)) - urgencyKey(daysUntilEol(b)) || daysUntilEol(a) - daysUntilEol(b));
 
   const data = sorted.map(m => {
-    const days = daysUntil(m.deprecation_date);
-    const urg = urgencyLabel(days, m.deprecation_date);
+    const days = daysUntilEol(m);
+    const urg = urgencyLabel(days, m.end_of_life_date);
     const provCls = m.provider.includes('AWS') ? 'aws' : 'google';
     const fmtDate = d => (!d || d === '9999-12-31') ? 'TBD' : d;
     return [
