@@ -42,15 +42,15 @@
   #grid-container .gridjs-head { background: var(--grid-head); }
   #grid-container .gridjs-th { font-size: 12px; font-weight: 600; color: var(--text); padding: 10px 12px; text-align: left; vertical-align: middle; }
   #grid-container .gridjs-th-content { display: inline; vertical-align: middle; }
-  #grid-container .gridjs-sort { display: inline-flex !important; vertical-align: middle; margin-left: 4px; }
-  #grid-container .gridjs-sort-neutral::before,
-  #grid-container .gridjs-sort-neutral::after { border-color: #111827 transparent; }
-  #grid-container .gridjs-sort-asc::before { border-color: transparent transparent #111827; }
-  #grid-container .gridjs-sort-desc::after { border-color: #111827 transparent transparent; }
-  body.dark #grid-container .gridjs-sort-neutral::before,
-  body.dark #grid-container .gridjs-sort-neutral::after { border-color: #f1f5f9 transparent; }
-  body.dark #grid-container .gridjs-sort-asc::before { border-color: transparent transparent #f1f5f9; }
-  body.dark #grid-container .gridjs-sort-desc::after { border-color: #f1f5f9 transparent transparent; }
+  #grid-container .gridjs-sort { display: inline !important; vertical-align: middle; margin-left: 4px; font-size: 12px; background: none; border: none; padding: 0; cursor: pointer; color: #374151; }
+  #grid-container .gridjs-sort svg,
+  #grid-container .gridjs-sort * { display: none !important; }
+  #grid-container .gridjs-sort-neutral::after { content: '↕'; display: inline !important; color: #374151; }
+  #grid-container .gridjs-sort-asc::after { content: '↑'; display: inline !important; color: #111827; }
+  #grid-container .gridjs-sort-desc::after { content: '↓'; display: inline !important; color: #111827; }
+  body.dark #grid-container .gridjs-sort-neutral::after { color: #e2e8f0 !important; }
+  body.dark #grid-container .gridjs-sort-asc::after,
+  body.dark #grid-container .gridjs-sort-desc::after { color: #ffffff !important; }
   #grid-container .gridjs-td { font-size: 12px; padding: 10px 12px; vertical-align: top; }
   #grid-container .gridjs-tr:hover td { background: var(--grid-hover); }
   #grid-container .gridjs-pagination { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; padding: 10px 12px; }
@@ -383,5 +383,151 @@ function toggleTheme() {
   }
 })();
 </script>
+
+<!-- LLM Dashboard Chat Widget -->
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+  #llm-chat-widget { position:fixed; bottom:24px; right:24px; z-index:9999; font-family:'IBM Plex Sans',sans-serif; }
+  #llm-chat-toggle { width:52px; height:52px; border-radius:50%; background:var(--text,#1a1a2e); color:var(--bg,#f8f9fb); border:none; cursor:pointer; font-size:22px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 16px rgba(0,0,0,0.2); transition:transform 0.15s; }
+  #llm-chat-toggle:hover { transform:scale(1.08); }
+  #llm-chat-panel { display:none; flex-direction:column; width:420px; height:560px; background:var(--surface,#fff); border:1px solid var(--border,#e4e4e0); border-radius:4px; box-shadow:0 8px 32px rgba(0,0,0,0.18); overflow:hidden; margin-bottom:12px; }
+  #llm-chat-panel.open { display:flex; }
+  .llm-chat-header { padding:14px 18px; border-bottom:1px solid var(--border,#e4e4e0); display:flex; align-items:center; gap:10px; flex-shrink:0; background:var(--surface,#fff); }
+  .llm-chat-dot { width:7px; height:7px; border-radius:50%; background:#22c55e; flex-shrink:0; }
+  .llm-chat-title { font-size:13px; font-weight:500; color:var(--text,#1a1a1a); }
+  .llm-chat-close { margin-left:auto; background:none; border:none; font-size:18px; cursor:pointer; color:var(--text-muted,#888); line-height:1; padding:0; }
+  .llm-chat-messages { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:12px; scroll-behavior:smooth; background:var(--bg,#f7f7f5); }
+  .llm-chat-msg { display:flex; flex-direction:column; gap:3px; max-width:85%; animation:llmFadeUp 0.2s ease; }
+  @keyframes llmFadeUp { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
+  .llm-chat-msg.user { align-self:flex-end; align-items:flex-end; }
+  .llm-chat-msg.assistant { align-self:flex-start; align-items:flex-start; }
+  .llm-chat-bubble { padding:9px 13px; font-size:13px; line-height:1.6; white-space:pre-wrap; border-radius:2px; }
+  .llm-chat-msg.user .llm-chat-bubble { background:var(--text,#1a1a2e); color:var(--bg,#f7f7f5); border-radius:2px 2px 0 2px; }
+  .llm-chat-msg.assistant .llm-chat-bubble { background:var(--surface,#fff); border:1px solid var(--border,#e4e4e0); border-radius:2px 2px 2px 0; color:var(--text,#1a1a1a); }
+  .llm-chat-label { font-size:10px; font-family:'IBM Plex Mono',monospace; color:var(--text-muted,#888); padding:0 2px; }
+  .llm-chat-typing { display:flex; gap:4px; padding:10px 13px; background:var(--surface,#fff); border:1px solid var(--border,#e4e4e0); border-radius:2px; align-self:flex-start; }
+  .llm-chat-typing span { width:5px; height:5px; border-radius:50%; background:var(--text-muted,#aaa); animation:llmBlink 1.2s infinite; }
+  .llm-chat-typing span:nth-child(2){animation-delay:0.2s} .llm-chat-typing span:nth-child(3){animation-delay:0.4s}
+  @keyframes llmBlink{0%,80%,100%{opacity:0.2}40%{opacity:1}}
+  .llm-chat-suggestions { padding:0 16px 10px; display:flex; gap:6px; flex-wrap:wrap; background:var(--bg,#f7f7f5); flex-shrink:0; }
+  .llm-chat-suggestion { padding:4px 10px; border:1px solid var(--border,#e4e4e0); border-radius:2px; font-size:11.5px; color:var(--text-muted,#888); cursor:pointer; background:var(--surface,#fff); transition:all 0.15s; }
+  .llm-chat-suggestion:hover { border-color:var(--text,#1a1a2e); color:var(--text,#1a1a2e); }
+  .llm-chat-input-row { padding:12px 16px; border-top:1px solid var(--border,#e4e4e0); background:var(--surface,#fff); display:flex; gap:8px; align-items:flex-end; flex-shrink:0; }
+  .llm-chat-input-row textarea { flex:1; border:1px solid var(--border,#e4e4e0); border-radius:2px; padding:8px 10px; font-size:13px; font-family:'IBM Plex Sans',sans-serif; font-weight:300; background:var(--bg,#f7f7f5); color:var(--text,#1a1a2e); resize:none; outline:none; min-height:38px; max-height:100px; line-height:1.5; }
+  .llm-chat-input-row textarea:focus { border-color:var(--text,#1a1a2e); }
+  .llm-chat-input-row textarea::placeholder { color:var(--text-muted,#888); }
+  .llm-chat-send { width:38px; height:38px; border:1px solid var(--text,#1a1a2e); border-radius:2px; background:var(--text,#1a1a2e); color:var(--bg,#fff); cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .llm-chat-send:hover { opacity:0.8; } .llm-chat-send:disabled { opacity:0.3; cursor:default; }
+  .llm-chat-msg.assistant .llm-chat-bubble table { border-collapse:collapse; width:100%; margin:6px 0; font-size:11.5px; }
+  .llm-chat-msg.assistant .llm-chat-bubble th { text-align:left; padding:4px 8px; border-bottom:2px solid var(--border,#e4e4e0); font-weight:500; color:var(--text-muted,#888); font-size:11px; text-transform:uppercase; letter-spacing:0.04em; }
+  .llm-chat-msg.assistant .llm-chat-bubble td { padding:4px 8px; border-bottom:1px solid var(--border,#e4e4e0); font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--text,#1a1a2e); }
+  .llm-chat-msg.assistant .llm-chat-bubble code { font-family:'IBM Plex Mono',monospace; font-size:11.5px; background:var(--bg,#f7f7f5); padding:1px 4px; border-radius:2px; color:var(--text,#1a1a2e); }
+  .llm-chat-msg.assistant .llm-chat-bubble strong { font-weight:500; color:var(--text,#1a1a2e); }
+</style>
+
+<div id="llm-chat-widget">
+  <div id="llm-chat-panel">
+    <div class="llm-chat-header">
+      <div class="llm-chat-dot"></div>
+      <div class="llm-chat-title">LLM Dashboard Assistant</div>
+      <button class="llm-chat-close" onclick="document.getElementById('llm-chat-panel').classList.remove('open')">×</button>
+    </div>
+    <div class="llm-chat-messages" id="llm-chat-messages">
+      <div class="llm-chat-msg assistant">
+        <div class="llm-chat-label">assistant</div>
+        <div class="llm-chat-bubble">Hi! I can answer questions about the LLM model usage data loaded on this page — apps, models, tokens, costs and environments.</div>
+      </div>
+    </div>
+    <div class="llm-chat-suggestions" id="llm-chat-suggestions">
+      <div class="llm-chat-suggestion" onclick="llmChatSend(this.textContent)">Which apps use Gemini?</div>
+      <div class="llm-chat-suggestion" onclick="llmChatSend(this.textContent)">What's the total cost?</div>
+      <div class="llm-chat-suggestion" onclick="llmChatSend(this.textContent)">Most expensive apps?</div>
+      <div class="llm-chat-suggestion" onclick="llmChatSend(this.textContent)">Total tokens used?</div>
+    </div>
+    <div class="llm-chat-input-row">
+      <textarea id="llm-chat-input" placeholder="Ask about your LLM apps, models…" rows="1"></textarea>
+      <button class="llm-chat-send" id="llm-chat-send-btn" onclick="llmChatSendMessage()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="15" height="15"><path d="M2 8h12M9 3l5 5-5 5"/></svg>
+      </button>
+    </div>
+  </div>
+  <button id="llm-chat-toggle" onclick="document.getElementById('llm-chat-panel').classList.toggle('open')" title="LLM Dashboard Assistant">💬</button>
+</div>
+
+<script>
+function llmChatAnswer(text) {
+  const q = text.toLowerCase();
+  const rows = typeof allRows !== 'undefined' ? allRows : [];
+  if (!rows.length) return 'Data is still loading — please try again in a moment.';
+
+  if (/how many|count.*app/.test(q)) {
+    const apps = new Set(rows.map(r=>r.app)); return `**${apps.size} applications** are tracked: ${[...apps].join(', ')}.`;
+  }
+  if (/how many|count.*model/.test(q)) {
+    const models = new Set(rows.map(r=>r.modelAlias||r.modelName)); return `**${models.size} distinct model aliases** found.`;
+  }
+  if (/most.*expensive|highest.*cost|top.*cost/.test(q)) {
+    const sorted = [...rows].filter(r=>r.cost>0).sort((a,b)=>b.cost-a.cost).slice(0,5);
+    if (!sorted.length) return 'No cost data available.';
+    return 'Most expensive (by app + model):\n' + sorted.map(r=>`· **${r.app}** / ${r.modelAlias||r.modelName} (${r.env}) — $${r.cost.toFixed(4)}`).join('\n');
+  }
+  if (/total.*token|token.*total/.test(q)) {
+    const total = rows.reduce((s,r)=>s+r.totalTokens,0);
+    return `Total tokens across all apps: **${Math.round(total).toLocaleString()}**.`;
+  }
+  if (/cost/.test(q)) {
+    const total = rows.reduce((s,r)=>s+r.cost,0); return `Total cost: **$${total.toFixed(2)}**.`;
+  }
+  if (/gemini/.test(q)) {
+    const geminiApps = [...new Set(rows.filter(r=>(r.modelAlias||r.modelName).toLowerCase().includes('gemini')).map(r=>r.app))];
+    return geminiApps.length ? `Apps using Gemini: **${geminiApps.join(', ')}**.` : 'No apps using Gemini in the current data.';
+  }
+  if (/claude|bedrock/.test(q)) {
+    const apps = [...new Set(rows.filter(r=>r.provider?.includes('Bedrock')||(r.modelAlias||r.modelName).toLowerCase().includes('claude')).map(r=>r.app))];
+    return apps.length ? `Apps using Claude/Bedrock: **${apps.join(', ')}**.` : 'No Bedrock apps in the current data.';
+  }
+  if (/env|environment|prod|region/.test(q)) {
+    const envs = [...new Set(rows.map(r=>r.env))].sort();
+    return `Environments in data: ${envs.map(e=>`**${e}**`).join(', ')}.`;
+  }
+
+  const appMatch = rows.find(r => q.includes(r.app?.toLowerCase()));
+  if (appMatch) {
+    const appRows = rows.filter(r=>r.app===appMatch.app);
+    return `**${appMatch.app}** uses:\n` + appRows.map(r=>`· ${r.modelAlias||r.modelName} (${r.env}) — ${Math.round(r.totalTokens).toLocaleString()} tokens`).join('\n');
+  }
+
+  return `I can answer questions about the **${new Set(rows.map(r=>r.app)).size} apps** loaded. Try:\n· Which apps use Gemini?\n· What's the total cost?\n· Most expensive apps?\n· Total tokens used?\n· What does [app name] use?`;
+}
+
+async function llmChatSend(text) {
+  document.getElementById('llm-chat-suggestions').style.display = 'none';
+  llmChatAddMessage('user', text);
+  setTimeout(() => llmChatAddMessage('assistant', llmChatAnswer(text)), 200);
+}
+async function llmChatSendMessage() {
+  const input = document.getElementById('llm-chat-input');
+  const text = input.value.trim(); if (!text) return;
+  input.value = ''; input.style.height = 'auto'; llmChatSend(text);
+}
+function llmChatAddMessage(role, text) {
+  const container = document.getElementById('llm-chat-messages');
+  const div = document.createElement('div'); div.className = 'llm-chat-msg ' + role;
+  const label = document.createElement('div'); label.className = 'llm-chat-label'; label.textContent = role;
+  const bubble = document.createElement('div'); bubble.className = 'llm-chat-bubble';
+  bubble.innerHTML = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/`(.*?)`/g,'<code>$1</code>')
+    .replace(/^- (.*$)/gm,'  · $1').replace(/\n/g,'<br>');
+  div.appendChild(label); div.appendChild(bubble); container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+document.getElementById('llm-chat-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); llmChatSendMessage(); }
+});
+document.getElementById('llm-chat-input').addEventListener('input', function() {
+  this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+});
+</script>
+<!-- End LLM Dashboard Chat Widget -->
 </body>
 </html>
