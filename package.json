@@ -1,0 +1,17 @@
+{
+  "name": "ai-platform-control-center",
+  "version": "1.0.0",
+  "description": "AI Platform Control Center dashboards",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "scrape": "node scripts/scrape-deprecations.js",
+    "check": "node scripts/check-deprecations.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "playwright": "^1.44.0"
+  }
+}

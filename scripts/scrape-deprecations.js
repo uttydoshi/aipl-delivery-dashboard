@@ -1,137 +1,210 @@
 #!/usr/bin/env node
 /**
- * AI Platform Control Center — Model Deprecation Scraper
- * Fetches deprecation dates from AWS Bedrock and Google Vertex AI docs.
+ * AI Platform Control Center — Model Deprecation Scraper (Playwright)
+ * Uses headless Chromium to scrape AWS and Google docs pages.
  * Run: node scripts/scrape-deprecations.js
  */
 
-const https = require('https');
+const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 
 const DATA_FILE = path.join(__dirname, '..', 'model-deprecations.json');
 
 const SOURCES = {
-  aws: 'https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html',
-  google: 'https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning',
+  awsLifecycle:   'https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html',
+  awsFoundations: 'https://docs.aws.amazon.com/bedrock/latest/userguide/foundation-models.html',
+  google:         'https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning',
 };
 
-function fetchPage(url) {
-  return new Promise((resolve, reject) => {
-    https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AI-Platform-Scraper/1.0)' } }, (res) => {
-      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        // Follow redirect
-        return fetchPage(res.headers.location).then(resolve).catch(reject);
-      }
-      if (res.statusCode !== 200) {
-        return reject(new Error(`HTTP ${res.statusCode} for ${url}`));
-      }
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => resolve(data));
-    }).on('error', reject);
-  });
-}
-
+// ─────────────────────────────────────────────
+// Date parsing helpers
+// ─────────────────────────────────────────────
 function parseDate(str) {
   if (!str) return null;
-  // Try common formats: "April 30, 2025", "2025-04-30", "Apr 30, 2025"
-  const d = new Date(str.trim());
+  const s = str.trim();
+  if (!s || s === 'N/A' || s === '—' || /no retirement/i.test(s)) return '9999-12-31';
+  // "Not before October 16, 2026" → use that date
+  const notBefore = s.match(/not before (.+)/i);
+  if (notBefore) return parseDate(notBefore[1]);
+  const d = new Date(s);
   if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
   return null;
 }
 
-function scrapeAWS(html) {
-  const models = [];
-  // Look for table rows with model info and dates
-  // AWS page typically has tables with | Model ID | Deprecation date | End of life date |
-  const tableRegex = /<tr[\s\S]*?<\/tr>/gi;
-  const tables = html.match(tableRegex) || [];
+// ─────────────────────────────────────────────
+// AWS Bedrock — model lifecycle page
+// ─────────────────────────────────────────────
+async function scrapeAwsLifecycle(page) {
+  console.log('  → Fetching AWS lifecycle page...');
+  await page.goto(SOURCES.awsLifecycle, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  await page.waitForSelector('table', { timeout: 15000 });
 
-  for (const row of tables) {
-    // Extract cell text
-    const cells = (row.match(/<td[\s\S]*?<\/td>/gi) || [])
-      .map(td => td.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
+  const models = await page.evaluate(() => {
+    const results = [];
+    document.querySelectorAll('table').forEach(table => {
+      const headers = [...table.querySelectorAll('th')].map(th => th.innerText.trim().toLowerCase());
+      if (!headers.some(h => /deprecat|lifecycle|end.of.life|eol/i.test(h))) return;
 
-    if (cells.length < 3) continue;
-
-    // Look for rows that contain model IDs (contain "anthropic" or "amazon" or "meta" etc)
-    const modelCell = cells.find(c => /anthropic\.|amazon\.|meta\.|ai21\.|cohere\.|mistral\./i.test(c));
-    if (!modelCell) continue;
-
-    // Find date-like cells
-    const dateCells = cells.filter(c => /\d{4}/.test(c) && /jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|\d{4}-\d{2}-\d{2}/i.test(c));
-    if (dateCells.length < 1) continue;
-
-    const deprecationDate = parseDate(dateCells[0]);
-    const eolDate = parseDate(dateCells[1] || dateCells[0]);
-
-    // Extract model name from the row
-    const nameCell = cells.find(c => c !== modelCell && c.length > 3 && !/^\d/.test(c)) || modelCell;
-
-    if (deprecationDate) {
-      models.push({
-        provider: 'AWS Bedrock',
-        model_id: modelCell.split(' ')[0].toLowerCase(),
-        model_name: nameCell,
-        deprecation_date: deprecationDate,
-        end_of_life_date: eolDate || deprecationDate,
-        status: new Date(deprecationDate) < new Date() ? 'deprecated' : 'active',
-        notes: '',
-        source_url: SOURCES.aws,
+      table.querySelectorAll('tbody tr').forEach(row => {
+        const cells = [...row.querySelectorAll('td')].map(td => td.innerText.trim());
+        if (cells.length < 2) return;
+        results.push({ cells, headers });
       });
-    }
-  }
+    });
+    return results;
+  });
 
-  return models;
+  return models.map(({ cells, headers }) => {
+    const get = keywords => {
+      const idx = headers.findIndex(h => keywords.some(k => h.includes(k)));
+      return idx >= 0 ? cells[idx] : '';
+    };
+    const modelId = (get(['model id', 'model name', 'id']) || cells[0]).toLowerCase().trim();
+    const deprecationRaw = get(['deprecat']) || get(['end of support']) || '';
+    const eolRaw = get(['end of life', 'eol']) || deprecationRaw;
+    const deprecationDate = parseDate(deprecationRaw);
+    if (!deprecationDate || !modelId) return null;
+
+    return {
+      provider: 'AWS Bedrock',
+      model_id: modelId,
+      model_name: cells[0],
+      deprecation_date: deprecationDate,
+      end_of_life_date: parseDate(eolRaw) || deprecationDate,
+      status: deprecationDate < new Date().toISOString().split('T')[0] ? 'deprecated' : 'active',
+      notes: '',
+      source_url: SOURCES.awsLifecycle,
+    };
+  }).filter(Boolean);
 }
 
-function scrapeGoogle(html) {
-  const models = [];
-  const tableRegex = /<tr[\s\S]*?<\/tr>/gi;
-  const tables = html.match(tableRegex) || [];
+// ─────────────────────────────────────────────
+// AWS Bedrock — foundation models page
+// (secondary source — catches models not on lifecycle page)
+// ─────────────────────────────────────────────
+async function scrapeAwsFoundations(page) {
+  console.log('  → Fetching AWS foundation models page...');
+  await page.goto(SOURCES.awsFoundations, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  await page.waitForSelector('table', { timeout: 15000 });
 
-  for (const row of tables) {
-    const cells = (row.match(/<td[\s\S]*?<\/td>/gi) || [])
-      .map(td => td.replace(/<[^>]+>/g, ' ').replace(/&[a-z]+;/g, ' ').replace(/\s+/g, ' ').trim());
+  return page.evaluate((sourceUrl) => {
+    const results = [];
+    document.querySelectorAll('table').forEach(table => {
+      const headers = [...table.querySelectorAll('th')].map(th => th.innerText.trim().toLowerCase());
+      if (!headers.some(h => /model/i.test(h))) return;
 
-    if (cells.length < 2) continue;
+      table.querySelectorAll('tbody tr').forEach(row => {
+        const cells = [...row.querySelectorAll('td')].map(td => td.innerText.trim());
+        if (cells.length < 2) return;
 
-    const modelCell = cells.find(c => /gemini|palm|bison|gecko|unicorn|text-/i.test(c));
-    if (!modelCell) continue;
+        // Look for cells containing deprecation/EOL info
+        const hasDeprecationInfo = cells.some(c => /deprecat|end.of.life|lifecycle/i.test(c));
+        if (!hasDeprecationInfo) return;
 
-    const dateCells = cells.filter(c => /\d{4}/.test(c) && /jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|\d{4}-\d{2}-\d{2}/i.test(c));
-    if (dateCells.length < 1) continue;
-
-    const deprecationDate = parseDate(dateCells[0]);
-    const eolDate = parseDate(dateCells[1] || dateCells[0]);
-
-    if (deprecationDate) {
-      models.push({
-        provider: 'Google Vertex AI',
-        model_id: modelCell.split(' ')[0].toLowerCase(),
-        model_name: modelCell,
-        deprecation_date: deprecationDate,
-        end_of_life_date: eolDate || deprecationDate,
-        status: new Date(deprecationDate) < new Date() ? 'deprecated' : 'active',
-        notes: '',
-        source_url: SOURCES.google,
+        const modelCell = cells[0];
+        results.push({ cells, headers, sourceUrl });
       });
-    }
-  }
-
-  return models;
+    });
+    return results;
+  }, SOURCES.awsFoundations);
 }
 
+// ─────────────────────────────────────────────
+// Google Vertex AI — model versioning page
+// Handles JS-rendered tabs
+// ─────────────────────────────────────────────
+async function scrapeGoogle(page) {
+  console.log('  → Fetching Google Vertex AI model versioning page...');
+  await page.goto(SOURCES.google, { waitUntil: 'networkidle', timeout: 45000 });
+
+  const models = [];
+
+  // Click through each tab and scrape
+  const tabSelectors = [
+    null, // first tab is active by default
+    'button:has-text("Veo models")',
+    'button:has-text("Embeddings models")',
+  ];
+
+  for (let i = 0; i < tabSelectors.length; i++) {
+    if (tabSelectors[i]) {
+      try {
+        const tab = await page.$(tabSelectors[i]);
+        if (tab) await tab.click();
+        await page.waitForTimeout(800);
+      } catch { /* tab might not exist */ }
+    }
+
+    const tabModels = await page.evaluate((sourceUrl) => {
+      const results = [];
+      document.querySelectorAll('table').forEach(table => {
+        const headers = [...table.querySelectorAll('th')].map(th => th.innerText.trim().toLowerCase());
+        if (!headers.some(h => /model/i.test(h))) return;
+        // Only tables with retirement/deprecation columns
+        if (!headers.some(h => /retir|deprecat|end.of/i.test(h))) return;
+
+        table.querySelectorAll('tbody tr').forEach(row => {
+          const cells = [...row.querySelectorAll('td')].map(td => td.innerText.trim());
+          if (cells.length < 2) return;
+
+          const get = keywords => {
+            const idx = headers.findIndex(h => keywords.some(k => h.includes(k)));
+            return idx >= 0 && cells[idx] ? cells[idx] : '';
+          };
+
+          const modelId = get(['model id']) || cells[0];
+          const retirementRaw = get(['retirement', 'retir', 'deprecat', 'end of life']) || '';
+          const upgradeRaw = get(['recommended upgrade', 'upgrade']) || '';
+
+          if (!modelId || !retirementRaw) return;
+
+          results.push({ modelId, retirementRaw, upgradeRaw, sourceUrl });
+        });
+      });
+      return results;
+    }, SOURCES.google);
+
+    models.push(...tabModels);
+  }
+
+  return models.map(({ modelId, retirementRaw, upgradeRaw, sourceUrl }) => {
+    const retirementDate = parseDate(retirementRaw);
+    if (!retirementDate) return null;
+
+    const modelIdClean = modelId.trim();
+    const nameParts = modelIdClean.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1));
+    const modelName = nameParts.join(' ');
+
+    return {
+      provider: 'Google Vertex AI',
+      model_id: modelIdClean,
+      model_name: modelName,
+      deprecation_date: retirementDate,
+      end_of_life_date: retirementDate,
+      status: retirementDate !== '9999-12-31' && retirementDate < new Date().toISOString().split('T')[0] ? 'deprecated' : 'active',
+      notes: upgradeRaw ? `Upgrade to ${upgradeRaw}` : (retirementDate === '9999-12-31' ? 'No retirement date announced' : ''),
+      source_url: sourceUrl,
+    };
+  }).filter(Boolean);
+}
+
+// ─────────────────────────────────────────────
+// Merge scraped into existing (preserve manual overrides)
+// ─────────────────────────────────────────────
 function mergeModels(existing, scraped) {
   const map = {};
-  // Start with existing
   for (const m of existing) map[m.model_id] = { ...m };
-  // Overlay scraped (update dates if found, keep manual entries)
   for (const m of scraped) {
     if (map[m.model_id]) {
-      // Update dates from scrape but keep manual overrides if scrape found nothing new
-      map[m.model_id] = { ...map[m.model_id], ...m, notes: map[m.model_id].notes };
+      // Update dates from scrape, preserve manual notes
+      map[m.model_id] = {
+        ...map[m.model_id],
+        deprecation_date: m.deprecation_date,
+        end_of_life_date: m.end_of_life_date,
+        status: m.status,
+        source_url: m.source_url,
+      };
     } else {
       map[m.model_id] = m;
     }
@@ -139,51 +212,79 @@ function mergeModels(existing, scraped) {
   return Object.values(map).sort((a, b) => a.deprecation_date.localeCompare(b.deprecation_date));
 }
 
+// ─────────────────────────────────────────────
+// Main
+// ─────────────────────────────────────────────
 async function main() {
-  console.log('🔍 Scraping AWS Bedrock deprecation dates...');
+  const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage();
+  await page.setExtraHTTPHeaders({ 'Accept-Language': 'en-US,en;q=0.9' });
+
   let awsModels = [];
+  let googleModels = [];
+  let hasErrors = false;
+
+  // AWS lifecycle page
   try {
-    const awsHtml = await fetchPage(SOURCES.aws);
-    awsModels = scrapeAWS(awsHtml);
-    console.log(`  ✅ AWS: found ${awsModels.length} model entries`);
+    const models = await scrapeAwsLifecycle(page);
+    awsModels.push(...models);
+    console.log(`  ✅ AWS lifecycle: ${models.length} models found`);
   } catch (err) {
-    console.error(`  ❌ AWS scrape failed: ${err.message}`);
-    // TODO: SLACK — post failure alert when webhook is set up
-    process.exitCode = 1;
+    console.error(`  ❌ AWS lifecycle scrape failed: ${err.message}`);
+    hasErrors = true;
+    // TODO: SLACK — alert when webhook is set up
   }
 
-  console.log('🔍 Scraping Google Vertex AI deprecation dates...');
-  let googleModels = [];
+  // AWS foundation models page (secondary source)
   try {
-    const googleHtml = await fetchPage(SOURCES.google);
-    googleModels = scrapeGoogle(googleHtml);
-    console.log(`  ✅ Google: found ${googleModels.length} model entries`);
+    const models = await scrapeAwsFoundations(page);
+    console.log(`  ✅ AWS foundation models: ${models.length} additional entries found`);
+    // Only add models not already found from lifecycle page
+    const existingIds = new Set(awsModels.map(m => m.model_id));
+    awsModels.push(...models.filter(m => m && !existingIds.has(m.model_id)));
+  } catch (err) {
+    console.error(`  ❌ AWS foundation models scrape failed: ${err.message}`);
+    // Non-fatal — lifecycle page is primary source
+  }
+
+  // Google Vertex AI
+  try {
+    googleModels = await scrapeGoogle(page);
+    console.log(`  ✅ Google: ${googleModels.length} models found`);
   } catch (err) {
     console.error(`  ❌ Google scrape failed: ${err.message}`);
-    // TODO: SLACK — post failure alert when webhook is set up
-    process.exitCode = 1;
+    hasErrors = true;
+    // TODO: SLACK — alert when webhook is set up
   }
 
-  // Load existing data
-  const existing = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
-  const merged = mergeModels(existing.models, [...awsModels, ...googleModels]);
+  await browser.close();
 
+  const existing = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+  const scraped = [...awsModels, ...googleModels];
+
+  if (scraped.length === 0) {
+    console.error('\n❌ No models scraped from any source. Keeping existing data unchanged.');
+    process.exit(1);
+  }
+
+  const merged = mergeModels(existing.models, scraped);
   const updated = {
     last_updated: new Date().toISOString(),
-    scrape_status: process.exitCode === 1 ? 'partial_failure' : 'success',
+    scrape_status: hasErrors ? 'partial_failure' : 'success',
     models: merged,
   };
 
   fs.writeFileSync(DATA_FILE, JSON.stringify(updated, null, 2));
-  console.log(`\n✅ Updated ${DATA_FILE} with ${merged.length} models`);
+  console.log(`\n✅ Saved ${merged.length} models to ${DATA_FILE}`);
 
-  if (process.exitCode === 1) {
-    console.warn('\n⚠️  One or more scrapers failed — some data may be stale. Check output above.');
+  if (hasErrors) {
+    console.warn('⚠️  Some scrapers failed — data may be partially stale.');
+    process.exit(1);
   }
 }
 
 main().catch(err => {
-  console.error('Fatal scrape error:', err);
-  // TODO: SLACK — post failure alert when webhook is set up
+  console.error('Fatal error:', err);
+  // TODO: SLACK — alert when webhook is set up
   process.exit(1);
 });

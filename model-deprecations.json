@@ -1,6 +1,6 @@
 {
-  "last_updated": "2026-06-05T00:00:00Z",
-  "scrape_status": "manual",
+  "last_updated": "2026-06-05T00:31:33.714Z",
+  "scrape_status": "success",
   "models": [
     {
       "provider": "AWS Bedrock",
@@ -21,6 +21,156 @@
       "status": "deprecated",
       "notes": "",
       "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "gemini-1.0-pro-001",
+      "model_name": "Gemini 1.0 Pro 001",
+      "deprecation_date": "2025-04-20",
+      "end_of_life_date": "2025-04-20",
+      "status": "deprecated",
+      "notes": "Upgrade to gemini-2.5-flash",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "gemini-1.0-pro-002",
+      "model_name": "Gemini 1.0 Pro 002",
+      "deprecation_date": "2025-04-20",
+      "end_of_life_date": "2025-04-20",
+      "status": "deprecated",
+      "notes": "Upgrade to gemini-2.5-flash",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "gemini-1.0-pro-vision-001",
+      "model_name": "Gemini 1.0 Pro Vision 001",
+      "deprecation_date": "2025-04-20",
+      "end_of_life_date": "2025-04-20",
+      "status": "deprecated",
+      "notes": "Upgrade to gemini-2.5-flash",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "text-bison",
+      "model_name": "Text Bison",
+      "deprecation_date": "2025-04-20",
+      "end_of_life_date": "2025-04-20",
+      "status": "deprecated",
+      "notes": "Upgrade to gemini-2.5-flash-lite",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "chat-bison",
+      "model_name": "Chat Bison",
+      "deprecation_date": "2025-04-20",
+      "end_of_life_date": "2025-04-20",
+      "status": "deprecated",
+      "notes": "Upgrade to gemini-2.5-flash-lite",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "code-gecko",
+      "model_name": "Code Gecko",
+      "deprecation_date": "2025-04-20",
+      "end_of_life_date": "2025-04-20",
+      "status": "deprecated",
+      "notes": "Upgrade to gemini-2.5-flash-lite",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "textembedding-gecko@002",
+      "model_name": "Textembedding Gecko@002",
+      "deprecation_date": "2025-04-20",
+      "end_of_life_date": "2025-04-20",
+      "status": "deprecated",
+      "notes": "Upgrade to gemini-embedding-001",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "textembedding-gecko@001",
+      "model_name": "Textembedding Gecko@001",
+      "deprecation_date": "2025-04-20",
+      "end_of_life_date": "2025-04-20",
+      "status": "deprecated",
+      "notes": "Upgrade to gemini-embedding-001",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "gemini-1.5-pro-001",
+      "model_name": "Gemini 1.5 Pro 001",
+      "deprecation_date": "2025-05-23",
+      "end_of_life_date": "2025-05-23",
+      "status": "deprecated",
+      "notes": "Upgrade to gemini-2.5-flash",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "gemini-1.5-flash-001",
+      "model_name": "Gemini 1.5 Flash 001",
+      "deprecation_date": "2025-05-23",
+      "end_of_life_date": "2025-05-23",
+      "status": "deprecated",
+      "notes": "Upgrade to gemini-2.5-flash-lite",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "textembedding-gecko@003*",
+      "model_name": "Textembedding Gecko@003*",
+      "deprecation_date": "2025-05-23",
+      "end_of_life_date": "2025-05-23",
+      "status": "deprecated",
+      "notes": "Upgrade to gemini-embedding-001",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "textembedding-gecko-multilingual@001",
+      "model_name": "Textembedding Gecko Multilingual@001",
+      "deprecation_date": "2025-05-23",
+      "end_of_life_date": "2025-05-23",
+      "status": "deprecated",
+      "notes": "Upgrade to gemini-embedding-001",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "gemini-1.5-pro-002",
+      "model_name": "Gemini 1.5 Pro 002",
+      "deprecation_date": "2025-09-23",
+      "end_of_life_date": "2025-09-23",
+      "status": "deprecated",
+      "notes": "Upgrade to gemini-2.5-flash",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "gemini-1.5-flash-002",
+      "model_name": "Gemini 1.5 Flash 002",
+      "deprecation_date": "2025-09-23",
+      "end_of_life_date": "2025-09-23",
+      "status": "deprecated",
+      "notes": "Upgrade to gemini-2.5-flash-lite",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "imagetext",
+      "model_name": "ImageText",
+      "deprecation_date": "2025-09-23",
+      "end_of_life_date": "2025-09-23",
+      "status": "deprecated",
+      "notes": "Upgrade to gemini-2.5-flash-image",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
     },
     {
       "provider": "AWS Bedrock",
@@ -44,42 +194,192 @@
     },
     {
       "provider": "Google Vertex AI",
-      "model_id": "gemini-1.0-pro",
-      "model_name": "Gemini 1.0 Pro",
-      "deprecation_date": "2025-04-09",
-      "end_of_life_date": "2025-04-09",
+      "model_id": "gemini-2.0-flash",
+      "model_name": "Gemini 2.0 Flash",
+      "deprecation_date": "2026-05-31",
+      "end_of_life_date": "2026-05-31",
       "status": "deprecated",
-      "notes": "",
+      "notes": "Upgrade to gemini-3.1-flash-lite",
       "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
     },
     {
       "provider": "Google Vertex AI",
-      "model_id": "gemini-1.5-pro-001",
-      "model_name": "Gemini 1.5 Pro 001",
-      "deprecation_date": "2026-05-24",
-      "end_of_life_date": "2026-05-24",
+      "model_id": "gemini-2.0-flash-lite",
+      "model_name": "Gemini 2.0 Flash Lite",
+      "deprecation_date": "2026-05-31",
+      "end_of_life_date": "2026-05-31",
+      "status": "deprecated",
+      "notes": "Upgrade to gemini-3.1-flash-lite",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "veo-3.0-generate-001",
+      "model_name": "Veo 3.0 Generate 001",
+      "deprecation_date": "2026-06-29",
+      "end_of_life_date": "2026-06-29",
       "status": "active",
       "notes": "",
       "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
     },
     {
       "provider": "Google Vertex AI",
-      "model_id": "gemini-1.5-flash-001",
-      "model_name": "Gemini 1.5 Flash 001",
-      "deprecation_date": "2026-05-24",
-      "end_of_life_date": "2026-05-24",
+      "model_id": "veo-3.0-fast-generate-001",
+      "model_name": "Veo 3.0 Fast Generate 001",
+      "deprecation_date": "2026-06-29",
+      "end_of_life_date": "2026-06-29",
       "status": "active",
       "notes": "",
       "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
     },
     {
       "provider": "Google Vertex AI",
-      "model_id": "gemini-2.0-flash-001",
-      "model_name": "Gemini 2.0 Flash 001",
-      "deprecation_date": "2027-02-05",
-      "end_of_life_date": "2027-02-05",
+      "model_id": "veo-2.0-generate-001",
+      "model_name": "Veo 2.0 Generate 001",
+      "deprecation_date": "2026-06-29",
+      "end_of_life_date": "2026-06-29",
       "status": "active",
       "notes": "",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "gemini-2.5-flash-image",
+      "model_name": "Gemini 2.5 Flash Image",
+      "deprecation_date": "2026-10-01",
+      "end_of_life_date": "2026-10-01",
+      "status": "active",
+      "notes": "",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "gemini-2.5-pro",
+      "model_name": "Gemini 2.5 Pro",
+      "deprecation_date": "2026-10-15",
+      "end_of_life_date": "2026-10-15",
+      "status": "active",
+      "notes": "Not before October 16, 2026",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "gemini-2.5-flash",
+      "model_name": "Gemini 2.5 Flash",
+      "deprecation_date": "2026-10-15",
+      "end_of_life_date": "2026-10-15",
+      "status": "active",
+      "notes": "Not before October 16, 2026",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "gemini-2.5-flash-lite",
+      "model_name": "Gemini 2.5 Flash Lite",
+      "deprecation_date": "2026-10-15",
+      "end_of_life_date": "2026-10-15",
+      "status": "active",
+      "notes": "Not before October 16, 2026",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "gemini-live-2.5-flash-native-audio",
+      "model_name": "Gemini Live 2.5 Flash Native Audio",
+      "deprecation_date": "2026-12-12",
+      "end_of_life_date": "2026-12-12",
+      "status": "active",
+      "notes": "",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "text-embedding-005",
+      "model_name": "Text Embedding 005",
+      "deprecation_date": "2027-03-31",
+      "end_of_life_date": "2027-03-31",
+      "status": "active",
+      "notes": "",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "text-embedding-004",
+      "model_name": "Text Embedding 004",
+      "deprecation_date": "2027-03-31",
+      "end_of_life_date": "2027-03-31",
+      "status": "active",
+      "notes": "",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "text-multilingual-embedding-002",
+      "model_name": "Text Multilingual Embedding 002",
+      "deprecation_date": "2027-03-31",
+      "end_of_life_date": "2027-03-31",
+      "status": "active",
+      "notes": "",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "multimodalembedding@001",
+      "model_name": "Multimodalembedding@001",
+      "deprecation_date": "2027-03-31",
+      "end_of_life_date": "2027-03-31",
+      "status": "active",
+      "notes": "",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "gemini-3.5-flash",
+      "model_name": "Gemini 3.5 Flash",
+      "deprecation_date": "9999-12-31",
+      "end_of_life_date": "9999-12-31",
+      "status": "active",
+      "notes": "No retirement date announced",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "gemini-3.1-flash-lite",
+      "model_name": "Gemini 3.1 Flash Lite",
+      "deprecation_date": "9999-12-31",
+      "end_of_life_date": "9999-12-31",
+      "status": "active",
+      "notes": "No retirement date announced",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "veo-3.1-generate-001",
+      "model_name": "Veo 3.1 Generate 001",
+      "deprecation_date": "9999-12-31",
+      "end_of_life_date": "9999-12-31",
+      "status": "active",
+      "notes": "No retirement date announced",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "veo-3.1-fast-generate-001",
+      "model_name": "Veo 3.1 Fast Generate 001",
+      "deprecation_date": "9999-12-31",
+      "end_of_life_date": "9999-12-31",
+      "status": "active",
+      "notes": "No retirement date announced",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "gemini-embedding-001",
+      "model_name": "Gemini Embedding 001",
+      "deprecation_date": "9999-12-31",
+      "end_of_life_date": "9999-12-31",
+      "status": "active",
+      "notes": "No retirement date announced",
       "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
     }
   ]

@@ -110,7 +110,8 @@ function daysUntil(dateStr) {
   return Math.ceil((target - now) / 86400000);
 }
 
-function urgencyLabel(days) {
+function urgencyLabel(days, dateStr) {
+  if (dateStr === '9999-12-31') return { label: '🟢 No date set', cls: 'safe' };
   if (days < 0)   return { label: '💀 Deprecated', cls: 'past' };
   if (days <= 30)  return { label: `🔴 ${days}d`, cls: 'urgent' };
   if (days <= 90)  return { label: `🟠 ${days}d`, cls: 'warning' };
@@ -155,14 +156,15 @@ function renderGrid(models) {
 
   const data = sorted.map(m => {
     const days = daysUntil(m.deprecation_date);
-    const urg = urgencyLabel(days);
+    const urg = urgencyLabel(days, m.deprecation_date);
     const provCls = m.provider.includes('AWS') ? 'aws' : 'google';
+    const fmtDate = d => d === '9999-12-31' ? 'TBD' : d;
     return [
       m.model_name,
       m.model_id,
       gridjs.html(`<span class="provider-badge ${provCls}">${m.provider}</span>`),
-      m.deprecation_date,
-      m.end_of_life_date,
+      fmtDate(m.deprecation_date),
+      fmtDate(m.end_of_life_date),
       gridjs.html(`<span class="urgency-badge ${urg.cls}">${urg.label}</span>`),
       m.notes || '—',
     ];

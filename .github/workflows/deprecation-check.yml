@@ -10,7 +10,7 @@ jobs:
   check-deprecations:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # Needed to commit updated JSON
+      contents: write
 
     steps:
       - name: Checkout repo
@@ -21,20 +21,30 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+
       - name: Run scraper
         id: scrape
         run: node scripts/scrape-deprecations.js
-        continue-on-error: true  # Don't stop pipeline on scrape failure
+        continue-on-error: true
 
       - name: Alert on scrape failure
         if: steps.scrape.outcome == 'failure'
         run: |
           echo "⚠️ Scraper failed — model-deprecations.json may be stale."
-          echo "Manual check of deprecation dates recommended."
+          echo "Manual check recommended:"
+          echo "  AWS:    https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
+          echo "  AWS:    https://docs.aws.amazon.com/bedrock/latest/userguide/foundation-models.html"
+          echo "  Google: https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
           # TODO: SLACK — uncomment when SLACK_WEBHOOK_URL secret is configured
-          # curl -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+          # CHANNEL="temp_help_ai_platform"
+          # curl -s -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
           #   -H 'Content-type: application/json' \
-          #   --data '{"channel":"#temp_help_ai_platform","text":"⚠️ *AI Platform Control Center*: Model deprecation scraper failed. Please manually check AWS and Google deprecation pages.\n• AWS: https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html\n• Google: https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"}'
+          #   --data "{\"channel\":\"#${CHANNEL}\",\"text\":\"⚠️ *AI Platform Control Center*: Model deprecation scraper failed. Please manually check:\n• <https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html|AWS Bedrock lifecycle>\n• <https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning|Google Vertex AI versions>\"}"
 
       - name: Commit updated deprecation data
         run: |
@@ -48,22 +58,24 @@ jobs:
       - name: Check for upcoming deprecations
         id: check
         run: node scripts/check-deprecations.js
-        continue-on-error: true  # Exit code 1 = urgent models found, but don't fail the whole job
+        continue-on-error: true
 
-      - name: Alert on upcoming deprecations
+      - name: Alert on urgent deprecations
         if: steps.check.outcome == 'failure'
         run: |
           echo "🔴 URGENT: One or more models deprecating within 30 days!"
           # TODO: SLACK — uncomment when SLACK_WEBHOOK_URL secret is configured
-          # curl -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+          # CHANNEL="temp_help_ai_platform"
+          # curl -s -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
           #   -H 'Content-type: application/json' \
-          #   --data '{"channel":"#temp_help_ai_platform","text":"🔴 *URGENT — LLM Model Deprecation*: One or more models are deprecating within 30 days. Check the dashboard: http://localhost:3000/model-deprecations"}'
+          #   --data "{\"channel\":\"#${CHANNEL}\",\"text\":\"🔴 *URGENT — LLM Model Deprecation*: One or more models are deprecating within 30 days. Check the dashboard.\"}"
 
       - name: Alert on workflow failure
         if: failure()
         run: |
           echo "❌ Deprecation check workflow encountered an unexpected error."
           # TODO: SLACK — uncomment when SLACK_WEBHOOK_URL secret is configured
-          # curl -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+          # CHANNEL="temp_help_ai_platform"
+          # curl -s -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
           #   -H 'Content-type: application/json' \
-          #   --data '{"channel":"#temp_help_ai_platform","text":"❌ *AI Platform Control Center*: The daily model deprecation check workflow failed unexpectedly. Please check GitHub Actions."}'
+          #   --data "{\"channel\":\"#${CHANNEL}\",\"text\":\"❌ *AI Platform Control Center*: Daily deprecation check workflow failed. <https://github.com/uttydoshi/ai-platform-control-center/actions|Check GitHub Actions>\"}"
