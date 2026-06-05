@@ -105,7 +105,8 @@ let providerFilter = '';
 let statusFilter = '';
 
 function daysUntil(dateStr) {
-  const target = new Date(dateStr);
+  if (!dateStr || dateStr === '9999-12-31') return 99999;
+  const target = new Date(dateStr); // handles both "dd-Mon-yyyy" and "yyyy-mm-dd"
   const now = new Date(); now.setHours(0,0,0,0);
   return Math.ceil((target - now) / 86400000);
 }
@@ -158,7 +159,7 @@ function renderGrid(models) {
     const days = daysUntil(m.deprecation_date);
     const urg = urgencyLabel(days, m.deprecation_date);
     const provCls = m.provider.includes('AWS') ? 'aws' : 'google';
-    const fmtDate = d => d === '9999-12-31' ? 'TBD' : d;
+    const fmtDate = d => (!d || d === '9999-12-31') ? 'TBD' : d;
     return [
       m.model_name,
       m.model_id,

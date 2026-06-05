@@ -17,7 +17,8 @@ const URGENT_DAYS = 30;
 // const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL;
 
 function daysUntil(dateStr) {
-  const target = new Date(dateStr);
+  if (!dateStr || dateStr === '9999-12-31') return 99999;
+  const target = new Date(dateStr); // handles "dd-Mon-yyyy" and "yyyy-mm-dd"
   const now = new Date();
   now.setHours(0, 0, 0, 0);
   return Math.ceil((target - now) / (1000 * 60 * 60 * 24));

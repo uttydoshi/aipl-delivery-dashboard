@@ -28,7 +28,9 @@ function parseDate(str) {
   const notBefore = s.match(/not before (.+)/i);
   if (notBefore) return parseDate(notBefore[1]);
   const d = new Date(s);
-  if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+  if (!isNaN(d.getTime())) {
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-');
+  }
   return null;
 }
 
