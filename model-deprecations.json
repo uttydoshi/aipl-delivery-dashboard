@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-06-07T23:57:29.027Z",
+  "last_updated": "2026-06-08T23:57:17.423Z",
   "scrape_status": "success",
   "models": [
     {
@@ -184,16 +184,6 @@
     },
     {
       "provider": "Google Vertex AI",
-      "model_id": "gemini-embedding-001",
-      "model_name": "Gemini Embedding 001",
-      "deprecation_date": "14-Jul-2026",
-      "end_of_life_date": "14-Jul-2026",
-      "status": "deprecated",
-      "notes": "No retirement date announced",
-      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
-    },
-    {
-      "provider": "Google Vertex AI",
       "model_id": "gemini-2.5-pro",
       "model_name": "Gemini 2.5 Pro",
       "deprecation_date": "16-Oct-2026",
@@ -251,6 +241,16 @@
       "notes": "",
       "status": "active",
       "source_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle.html"
+    },
+    {
+      "provider": "Google Vertex AI",
+      "model_id": "gemini-embedding-001",
+      "model_name": "Gemini Embedding 001",
+      "deprecation_date": "20-May-2028",
+      "end_of_life_date": "20-May-2028",
+      "status": "deprecated",
+      "notes": "No retirement date announced",
+      "source_url": "https://cloud.google.com/vertex-ai/generative-ai/docs/learn/model-versioning"
     },
     {
       "provider": "Google Vertex AI",
