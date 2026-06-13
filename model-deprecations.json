@@ -1,6 +1,6 @@
 {
-  "last_updated": "2026-06-12T00:14:58.664Z",
-  "scrape_status": "partial_failure",
+  "last_updated": "2026-06-13T00:12:36.812Z",
+  "scrape_status": "success",
   "models": [
     {
       "provider": "Google Vertex AI",
